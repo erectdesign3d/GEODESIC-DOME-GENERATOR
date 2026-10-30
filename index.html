@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Geodesic Dome Studio — v1.7</title><style>
+:root{font-family:Inter,'Segoe UI',Arial,sans-serif;color:#e6edf6;background:#0d1420}*{box-sizing:border-box}body{margin:0}header{height:62px;background:#151f2f;display:flex;align-items:center;justify-content:space-between;padding:0 22px;border-bottom:1px solid #2c3b4c}header strong{font-size:18px}.small{color:#91a3b7;font-size:12px}.pill{background:#263e55;color:#b9d9ef;border-radius:15px;padding:5px 9px;font-size:11px}main{display:grid;grid-template-columns:340px minmax(400px,1fr) 260px;min-height:600px;height:calc(100vh - 62px);overflow:hidden}aside{padding:19px;background:#131d2b;border-right:1px solid #2b3a49;overflow:auto;max-height:100%}section{border-bottom:1px solid #304050;padding:5px 0 16px;margin-bottom:15px}h3{font-size:12px;letter-spacing:.08em;color:#8ca6bc;text-transform:uppercase;margin:6px 0 16px}label{display:block;color:#bdcbda;font-size:12px;margin:10px 0 5px}input,select{width:100%;background:#202e3d;color:#f0f4f9;border:1px solid #3c5063;padding:9px;border-radius:6px;font:inherit;font-size:13px}input:focus,select:focus{outline:2px solid #3995ea} .split{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn{border:1px solid #44739a;background:#215c96;color:white;border-radius:7px;padding:10px 14px;cursor:pointer;font-weight:600}.btn.secondary{background:#23354b}.btn:disabled{opacity:.4;cursor:not-allowed}.stack{display:grid;gap:9px}.viewer{position:relative;min-height:0;background:radial-gradient(circle at 50% 42%,#22344b,#0c1523 70%)}#view{width:100%;height:100%;min-height:0;display:block}.overlay{position:absolute;left:20px;top:20px;pointer-events:none}.overlay b{font-size:15px}.overlay .small{margin-top:5px}.bottom{position:absolute;bottom:15px;left:20px;color:#9babbc;font-size:12px;pointer-events:none}.report{padding:19px;background:#131d2b;border-left:1px solid #2b3a49} .metric{background:#1d2c3b;border:1px solid #2d4459;border-radius:9px;padding:12px;margin-bottom:10px}.metric b{font-size:23px;display:block;margin-top:4px}.metric span{font-size:12px;color:#9eb3c8}.group-chip{display:inline-flex;align-items:center;gap:7px;font-weight:750}.group-dot{width:12px;height:12px;border-radius:3px;display:inline-block;box-shadow:0 0 0 1px #ffffff40} .scrollTable{max-height:230px;overflow:auto}table{width:100%;border-collapse:collapse;font-size:12px}td,th{text-align:left;padding:8px 4px;border-bottom:1px solid #2c3b4a}th{color:#9db4c6} .notice{font-size:12px;color:#9bb0c4;line-height:1.5;background:#1a2b3d;border-radius:8px;padding:12px;margin-top:15px}footer{background:#101827;padding:11px 18px;color:#7994aa;font-size:11px} @media(max-width:1050px){main{grid-template-columns:300px 1fr}.report{grid-column:1/-1}}@media(max-width:680px){main{display:block;height:auto;overflow:visible}.viewer,#view{height:430px;min-height:430px}aside{max-height:none}.report{border-left:0}}
+
+.section-toggle{width:100%;display:flex;justify-content:space-between;align-items:center;text-align:left;border:0;background:transparent;color:#8ca6bc;padding:7px 2px;cursor:pointer;font:inherit;font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.section-toggle:hover{color:#fff}.section-toggle .arrow{font-size:15px;transition:transform .15s}.section-toggle[aria-expanded="false"] .arrow{transform:rotate(-90deg)}
+.section-content[hidden]{display:none!important}.report{overflow:auto;max-height:100%}
+@media(max-width:1050px){main{height:auto;overflow:visible}.viewer{height:calc(100vh - 62px);min-height:430px}.report{max-height:none}}
+
+#welcome{position:fixed;inset:0;z-index:200;background:radial-gradient(circle at 60% 25%,#284260 0%,#101b2c 42%,#070e19 100%);display:flex;align-items:center;justify-content:center;padding:24px;transition:opacity .52s ease,visibility .52s ease}
+#welcome.dismissed{opacity:0;visibility:hidden;pointer-events:none}
+.welcome-card{width:min(100%,480px);background:#162439ee;border:1px solid #466680;border-radius:20px;padding:40px;box-shadow:0 25px 85px #0008;color:#f0f5ff}
+.welcome-mark{font-size:52px;color:#76c6ef;line-height:1}.welcome-eyebrow{font-size:12px;letter-spacing:.18em;color:#8db6d0;font-weight:700;margin:18px 0 10px}
+.welcome-card h1{font-size:36px;line-height:1.1;margin:0 0 16px}.welcome-card p{color:#b9cce0;line-height:1.6;margin-bottom:28px}
+.welcome-card label{margin-bottom:9px}.welcome-card select{padding:13px;font-size:15px}.welcome-start{display:block;width:100%;padding:16px;margin:20px 0 14px;font-size:16px;background:#267fc4;border-color:#59a8df}
+.welcome-footnote{font-size:12px;color:#8ca5bb;display:block;text-align:center}
+#assemblyStatus{position:absolute;left:50%;bottom:48px;transform:translateX(-50%);color:#d3ebff;letter-spacing:.12em;font-size:12px;font-weight:700;pointer-events:none;text-shadow:0 2px 6px #000;background:#162e46cc;border:1px solid #4e83a3;border-radius:16px;padding:9px 18px;z-index:4}
+#assemblyStatus[hidden]{display:none}
+@media(prefers-reduced-motion:reduce){#welcome{transition:none}}
+#overlayToggle{position:absolute;right:16px;top:60px;z-index:12;display:none;box-shadow:0 5px 20px #0008}#overlayToggle.visible{display:block}#backToDomeFloat{position:absolute;right:16px;top:15px;z-index:12;display:none;box-shadow:0 5px 20px #0008}#backToDomeFloat.visible{display:block}.memberDrawing{background:#1a2b3b;border:1px solid #37536a;border-radius:9px;margin:9px 0;padding:10px}.memberDrawing svg{width:100%;height:auto;display:block}.memberDrawing small{color:#acc0d0}#memberDrawings{max-height:420px;overflow:auto}
+</style></head><body><div aria-labelledby="welcomeTitle" aria-modal="true" id="welcome" role="dialog">
+<div class="welcome-card">
+<div class="welcome-mark">⬡</div>
+<div class="welcome-eyebrow">GEODESIC DOME STUDIO</div>
+<h1 id="welcomeTitle">Build your dome.</h1>
+<p>Choose how you'd like to work. Start to assemble the model and open your design workspace.</p>
+<label for="welcomeUnits">Primary dimensions</label>
+<select id="welcomeUnits"><option value="ftin">Feet + inches (ft, in)</option><option value="in">Inches (in)</option><option value="m">Meters (m)</option><option selected="" value="mm">Millimeters (mm)</option></select>
+<button class="btn welcome-start" id="welcomeStart" type="button">Start designing   →</button>
+<span class="welcome-footnote">You can change units later in Dome Features.</span>
+</div>
+</div>
+<header><div><strong>⬡ GEODESIC DOME STUDIO</strong> <span class="small">/ browser prototype</span></div><span class="pill">V2.0 • OFFLINE READY</span></header><main><aside><section><h3>01 — DOME FEATURES</h3><div class="split"><div><label>Frequency</label><select id="freq"><option>1</option><option>2</option><option selected="">3</option><option>4</option><option>5</option><option>6</option></select></div><div><label>Dome cutoff</label><select id="cut"><option value="0.375">3/8 dome</option><option value="0.3125">5/16 dome</option><option selected="" value="0.5">1/2 dome (hemisphere)</option><option value="0.625">5/8 dome</option><option value="0.75">3/4 dome</option><option value="1">Full sphere</option></select></div></div><div class="split"><div><label>Primary units</label><select id="units"><option value="ftin">ft, in</option><option value="in">in</option><option value="m">m</option><option selected="" value="mm">mm</option></select></div><div><label id="diaLabel">Sphere diameter (mm)</label><input id="dia" type="text" value="6000"/></div></div><div class="small" id="diaDual" style="margin-top:7px"></div>
+<label>Lower dome profile</label><select id="baseStyle"><option selected="" value="spherical">Original spherical base (level cut)</option><option value="straight">Straighten lower band / verticalize base</option></select>
+<div id="baseControls" style="display:none"><label>Lower-band blend height</label><input id="baseRise" type="text" value="450"/><div class="small" id="baseInfo">Gradually straightens the lower part of the shell to a circular, vertical-sided perimeter.</div></div><label>Cut-length standardization</label><select id="lengthMode"><option selected="" value="nominal">As-designed lengths (existing grouping)</option><option value="reduce">Minimize cut lengths within a maximum deviation</option></select>
+<div id="lengthControls" style="display:none"><label>Maximum permitted cut-length change (±)</label><input id="lengthDeviation" type="text" value="5"/><div class="small">Clusters lengths into the fewest groups within the specified per-member correction. Members are shortened/extended at both ends equally in the preview and exports. Joint fit may change.</div></div>
+<div class="split"><div><label>Rotation (degrees)</label><input id="rot" step="5" type="number" value="0"/></div><div><label id="tolLabel">Length tolerance (mm)</label><input id="tol" type="text" value="0.5"/></div></div></section><section><h3>02 — MATERIAL</h3><label>Material family</label><select id="fam"><option value="emt">Electrical EMT conduit</option><option value="pvc">PVC Schedule 40</option><option selected="" value="fence">Galvanized fence rail</option><option value="wood">Dimensional lumber</option><option value="bamboo">Bamboo (nominal)</option><option value="custom">Custom round tube</option></select><label>Stock size</label><select id="size"></select><div class="split"><div><label>Outside / width</label><input id="od" type="text"/></div><div><label>Wall / depth</label><input id="wall" type="text"/></div></div><div class="split"><div><label>Density (kg/m³)</label><input id="density" min="1" step="1" type="number"/></div><div><label>Starting stock length</label><input id="stock" type="text"/></div></div><div class="split"><div><label>Saw kerf</label><input id="kerf" type="text" value="3"/></div><div><label>End trim / stock</label><input id="trim" type="text" value="0"/></div></div><div class="small" id="dual" style="margin-top:10px"></div><div id="woodOptions"><label><input id="woodTrim" style="width:auto;margin-right:7px" type="checkbox"/>Fit lumber ends using angled joint-cut planes</label><div class="small">Visually clips each timber against bisector planes between connected members. This creates angled or compound end cuts instead of shortening the complete prism. Manufacturing cut coordinates and solid exports are not yet supported.</div></div></section><section><h3>03 — CONNECTIONS</h3><label>End style</label><select id="ends"><option value="plain">Straight end (hub clearance)</option><option value="crimp">Flattened / tabbed ends</option><option value="hub">Multi-socket tapered hub (preview)</option></select><div id="tabFields" style="display:none"><label>Inspect flattened-tab joint</label><select id="tabHubNode"><option value="auto">Automatic hub</option></select><button class="btn secondary" type="button" id="tabInspect" style="width:100%;margin:8px 0">Zoom to selected tab joint</button><div class="small">Or click a hub point in the full dome. All tabs share a concentric through-bolt center at the selected hub. Their separate axial offsets no longer spread the holes apart. The tabs are schematic; physical stacking and bend geometry are not yet resolved.</div><div class="split"><div><label>Tab length, each end</label><input id="tabLength" type="text" value="45"/></div><div><label>Tab width (auto: π × OD / 2)</label><input id="tabWidth" readonly="" title="Calculated from outside diameter" type="text"/></div><div><label>End clipping radius (user-defined)</label><input id="endRadius" title="Radius of curved tab end" type="text" value="15"/></div><div><label>Tab center offset from end</label><input id="tabCenter" type="text" value="22.5"/></div><div><label>Through-bolt Ø</label><input id="boltDia" type="text" value="10"/></div><div><label>Hole center from end</label><input id="boltOffset" type="text" value="15"/></div><div><label>Tab thickness (target)</label><input id="tabThickness" type="text" value="4"/></div></div><label>End treatment</label><select id="tabSides"><option value="both">Both ends</option><option value="a">Start end only</option><option value="b">Finish end only</option></select><div class="small" id="tabCheck"></div></div><div id="hubFields" style="display:none"><div class="split"><div><label>Sleeve start along strut (from hub)</label><input id="hubStart" type="text" value="10"/></div><div><label>Contact length along strut</label><input id="hubContact" type="text" value="35"/></div><div><label>Hub shell thickness</label><input id="hubThick" type="text" value="3"/></div><div><label>Conical taper angle (degrees)</label><input id="hubTaper" max="60" min="0" step="1" type="number" value="15"/></div><div><label>Radial clearance / boolean offset</label><input id="hubOffset" type="text" value="0.5"/></div><div><label>Shell placement</label><select id="hubPlacement"><option selected="" value="external">Over tube (external socket)</option><option value="internal">Inside tube (insert)</option></select></div>
+<div><label>Straight collar length</label><input id="hubCollar" type="text" value="40"/></div>
+<div><label>Cross-bolt hole Ø</label><input id="hubBoltDia" type="text" value="8"/></div>
+<div><label>Hole center from open socket tip</label><input id="hubBoltFromTip" type="text" value="14"/></div>
+<div><label>Hole rotation around socket axis (°)</label><input id="hubBoltRotation" max="360" min="-360" step="5" type="number" value="0"/></div>
+<div><label>Holes per socket</label><select id="hubBoltCount"><option value="1">1 through-hole</option><option value="2">2 through-holes</option></select></div>
+<div><label>Second-hole spacing</label><input id="hubBoltPitch" type="text" value="18"/></div>
+<div><label>Preview</label><select id="hubView"><option value="dome">Entire dome</option><option value="detail">Isolated connector</option></select></div>
+<div><label>Hub arm count (detail view)</label><select id="hubInspect"><option value="auto">Automatic</option></select></div><div><label>Selected hub node</label><select id="hubNode"><option value="auto">Automatic</option></select></div>
+</div><label style="margin-top:10px"><input id="hubCenterOn" style="width:auto;margin-right:6px" type="checkbox"/>Add hub center cylinder</label><div class="split" id="centerHubControls"><div><label>Center cylinder outside Ø</label><input id="hubCenterDia" type="text" value="24"/></div><div><label>Cylinder wall thickness</label><input id="hubCenterWall" type="text" value="3"/></div><div><label>Axial projection length</label><input id="hubCenterLength" type="text" value="45"/></div><div><label>Center cylinder start offset (signed)</label><input id="hubCenterStart" type="text" value="0"/></div><div><label>Cylinder projection direction</label><select id="hubCenterDirection"><option value="outward">Outward (exterior)</option><option value="inward">Inward (interior)</option></select></div><div style="grid-column:1 / -1"><label><input checked="" id="hubCenterHole" style="width:auto;margin-right:6px" type="checkbox"/>Include center axial hole (bore)</label></div></div><div class="small">Start offset is signed along the outward normal: negative moves the start inside the dome. Direction sets which way the cylinder extends from that point. Sketch preview only; actual connector STEP solids need a backend update.</div><div class="small" id="hubCheck" role="status" style="margin:9px 0"></div><label><input id="hubBoolean" style="width:auto;margin-right:7px" type="checkbox"/>Extra Boolean subtraction of intersecting struts (reserved; not yet implemented)</label><div class="small">Connectors use actual strut directions, including 4-, 5-, and 6-way hubs. Preview holes are markers. The included optional Python STEP converter creates fused hub solids with socket bores and drilled cross-holes; browser STL/OBJ export does not.</div></div><label>Joint clearance (tube-to-tube)</label><input id="jointGap" type="text" value="2"/><div class="small" id="jointClearInfo">Straight and sleeved tubes stop short of the common hub to prevent overlap. Clearance is included in cut lengths.</div><label>End allowance per side</label><input id="allow" type="text" value="0"/><div class="notice">Tabbed ends and multi-socket connectors are shown as 3D-projected preview geometry (tab bolt openings are concentric at each shared hub; physical tab bends, stacked plates, and bolt geometry are not modeled). Browser STL/OBJ exports contain struts only. The separate CadQuery STEP converter now generates hub solids with socket bores and drilled through-holes; connector mass is not included in the on-screen takeoff. Tab width automatically equals π × outside diameter / 2; end clip radius is adjustable. Check fabrication feasibility independently.</div></section><section><h3>04 — ENTRANCE</h3>
+<label><input id="doorEnabled" style="width:auto;margin-right:7px" type="checkbox"/>Generate doorway</label>
+<div id="doorControls"><div class="split"><div><label>Clear opening width</label><input id="doorWidth" type="text" value="900"/></div><div><label>Clear opening height</label><input id="doorHeight" type="text" value="2000"/></div></div>
+<div class="split"><div><label>Door / frame thickness</label><input id="doorThickness" type="text" value="50"/></div><div><label>Radial position from dome base</label><input id="doorOffset" type="text" value="0"/></div></div>
+<div><label>Slide along flat base (tangential)</label><input id="doorSlide" type="text" value="0"/></div><div class="small" id="doorPlacementInfo">Door bottom follows the flat-cut dome base; adjust angle, tangential slide, and radial clearance.</div><label>Angle around dome (degrees; 0° = +X)</label><input id="doorAngle" max="360" min="-360" step="5" type="number" value="0"/>
+<label>Opening treatment</label><select id="doorTreatment"><option value="identify">Mark intersecting struts (retain in model)</option><option selected="" value="remove">Remove intersecting struts (whole members)</option></select>
+<div class="small">Door plane is vertical and faces radially outward. Negative radial offset moves it inward. Whole intersecting members are removed, not cut into new partial struts. Additional framing and load paths require independent design.</div><div class="small" id="doorStatus"></div></div></section><section><h3>05 — ADDITIONAL STRUTS</h3>
+<div class="small">Link any two dome hubs or doorway corners. In click-to-link mode choose a starting point, then click multiple destinations to make several struts from the same point. Use <b>New start point</b> to switch hubs. Drag to rotate; click without dragging to select.</div>
+<div class="split"><div><label>Start point</label><select id="braceA"><option value="">Choose endpoint</option></select></div><div><label>End point</label><select id="braceB"><option value="">Choose endpoint</option></select></div></div>
+<div class="stack"><button class="btn secondary" id="bracePick">Start linking by clicking</button><button class="btn" id="braceAdd">Add strut between selected points</button><button class="btn secondary" id="braceNewStart">New start point</button><button class="btn secondary" id="braceCancel">Finish linking</button></div>
+<div class="small" id="braceStatus" role="status">No supplemental struts yet.</div><div class="small" id="braceList" style="max-height:160px;overflow:auto"></div>
+<div class="small">Supplemental members share the current stock profile and enter the cut list, 3D export and printable map. Door frame corners are reference positions only; door framing and fastening are not generated.</div></section><section><h3>06 — COVERING</h3><label><input id="coverEnabled" style="width:auto;margin-right:7px" type="checkbox"/>Include covering in design estimate</label><label>Covering material</label><select id="coverType"><option value="polycarbonate">Polycarbonate panels</option><option value="plywood">Plywood sheathing</option><option value="fabric">Fabric / membrane</option><option value="custom">Custom covering</option></select><div class="split"><div><label>Thickness</label><input id="coverThickness" type="text" value="6"/></div><div><label>Waste allowance (%)</label><input id="coverWaste" max="100" min="0" step="1" type="number" value="10"/></div></div><div class="small" id="coverEstimate">Enable covering to estimate surface area. This does not create panels or cutouts.</div></section><section><h3>07 — EXPORT</h3><div class="stack"><button class="btn" id="csv">Download cut list (.csv)</button><button class="btn secondary" id="printReport">Print cutting diagrams + polar dome map</button><button class="btn secondary" id="reportHtml">Download fabrication report (.html)</button><button class="btn secondary" id="memberDoc">Download dimensioned strut drawings (.html)</button><button class="btn secondary" id="json">Download editable project (.json)</button><button class="btn secondary" id="stl">Download preview geometry (.stl)</button><button class="btn secondary" id="obj">Download preview geometry (.obj)</button><button class="btn secondary" id="anglesCsv">Download angle report (.csv)</button></div><div class="notice">STEP assembly (including drilled multi-socket hubs) is generated with the included CadQuery Python converter and exported project JSON. Browser STL/OBJ files still contain only struts. Native SLDASM is not generated.</div><p class="small">3D preview works offline; drag to orbit and scroll to zoom.</p></section></aside><div class="viewer"><div hidden="" id="assemblyStatus">ASSEMBLING DOME · 0%</div><canvas id="view"></canvas><button class="btn secondary" type="button" id="overlayToggle" aria-pressed="true">◉ Dimensions: On</button><button class="btn secondary" id="backToDomeFloat">↖ Return to full dome</button><div class="overlay"><b>Assembly preview</b><div class="small" id="info">Drag to orbit · Scroll to zoom</div></div><div class="bottom">Internal CAD coordinates: mm • Connector holes are visual markers, not cut solids</div></div><div class="report"><h3>Material takeoff</h3><div class="metric"><span>Struts / cut pieces</span><b id="nstruts">—</b></div><div class="metric"><span>Total member length</span><b id="length">—</b></div><div class="metric"><span>Estimated member mass</span><b id="weight">—</b></div><div class="metric"><span>Cut-length families</span><b id="variants">—</b></div><div class="metric"><span>Original length groups</span><b id="originalVariants">—</b></div><div class="metric"><span>Largest length adjustment</span><b id="maxCorrection">—</b></div><div class="small" id="standardNotice" style="margin-bottom:10px"></div><div class="metric"><span>Estimated minimum stock pieces*</span><b id="stocks">—</b></div><div class="metric"><span>Stock utilization (estimated)</span><b id="utilization">—</b></div><div class="small" id="stockWarning"></div><h3>Cut groups</h3><table><thead><tr><th>Group</th><th>Qty</th><th id="primaryHeader">mm</th><th id="secondaryHeader">in</th><th>Stock*</th></tr></thead><tbody id="cutrows"></tbody></table><div class="notice">*Stock pieces per group are calculated independently; the overall total nests all groups together using a first-fit-decreasing estimate. Saw kerf, stock-end trim and end allowance are included. Not a guaranteed optimal cutting plan. Member mass excludes hubs and connectors.</div><h3>Dimensioned strut side views</h3><div class="small">Timber option visually clips angled joint faces. Listed lengths are centerline references; cut-face measurements are not yet fabrication-ready.</div><div id="memberDrawings"></div><button class="btn secondary" id="memberDocRight" style="width:100%;margin-top:8px">Download drawing document</button><h3>Connector inventory</h3><div class="scrollTable"><table><thead><tr><th>Arms</th><th>Hubs</th><th>Sockets</th><th>Holes</th></tr></thead><tbody id="hubInventory"></tbody></table></div><div class="small" id="hubSummaryNote">Counts include boundary hubs where present.</div><button class="btn secondary" id="hubCsv" style="width:100%;margin-top:9px">Download connector schedule (.csv)</button><h3>Hub types by strut count</h3><div class="scrollTable"><table><thead><tr><th>Struts / hub</th><th>Hubs</th><th>Example angles</th></tr></thead><tbody id="hubTypes"></tbody></table></div><div id="legacyAngleOutputs" hidden aria-hidden="true"><div class="metric"><span>Unique hub-angle combinations</span><b id="angleTypes">—</b></div><div class="metric"><span>Unique triangular interior-angle sets</span><b id="facetTypes">—</b></div><div class="small">Hub angles are the smaller 3D angles between struts sharing a node. Facet interior angles are measured inside each triangular surface (clipped boundary faces may be triangulated). Values are geometric, not connector bend or miter settings.</div><div class="small">Click a hub in the complete dome view to zoom into its connection, including timber. Overlay shows member lengths and true 3D strut-axis angles (not saw bevel settings).</div><div class="small" id="selectedHubInfo" style="padding:9px 0;line-height:1.6">Select a node to inspect.</div><button class="btn secondary" id="backToDome" style="display:none" aria-hidden="true" tabindex="-1">Return to full dome</button><div class="scrollTable"><table><thead><tr><th>Angle</th><th>Count</th></tr></thead><tbody id="hubAngles"></tbody></table></div><div class="small">Interior fold = 180° minus the angle between adjacent panel normals. 180° means flat. Boundary and artificial triangulation edges are excluded from this tally.</div><div class="scrollTable"><table><thead><tr><th>Fold angle</th><th>Edges</th></tr></thead><tbody id="foldAngles"></tbody></table></div><div class="scrollTable"><table><thead><tr><th>Angles (°)</th><th>Facets</th></tr></thead><tbody id="facetAngles"></tbody></table></div></div></div></main><footer>Geodesic Dome Studio prototype · Original project &amp; computation are editable. STEP backend script included separately. Fabrication prototype; connection fit and member corrections require verification. Structural analysis deferred.</footer>
+<script>
+const $=id=>document.getElementById(id);
+const C={emt:{density:7850,stock:3048,items:[['1/2 in EMT',17.93,.51],['3/4 in EMT',23.42,.58],['1 in EMT',29.54,.69],['1-1/4 in EMT',38.35,.77],['1-1/2 in EMT',44.2,.77]]},pvc:{density:1400,stock:3048,items:[['1/2 in Sch40',21.34,2.77],['3/4 in Sch40',26.67,2.87],['1 in Sch40',33.40,3.38],['1-1/4 in Sch40',42.16,3.56],['1-1/2 in Sch40',48.26,3.68],['2 in Sch40',60.33,3.91]]},fence:{density:7850,stock:3200.4,items:[['1-3/8 in, 17ga (verify)',34.93,1.37],['1-3/8 in, 16ga (verify)',34.93,1.52],['1-5/8 in, 16ga (verify)',41.28,1.52]]},wood:{density:500,stock:2438.4,items:[['2×2 actual',38.1,38.1],['2×3 actual',38.1,63.5],['2×4 actual',38.1,88.9],['2×6 actual',38.1,139.7],['4×4 actual',88.9,88.9]]},bamboo:{density:650,stock:2438.4,items:[['1 in nominal (estimate)',25.4,4],['2 in nominal (estimate)',50.8,6],['3 in nominal (estimate)',76.2,8]]},custom:{density:7850,stock:3048,items:[['Custom tube',32,2]]}};
+let dimensionalOverlayEnabled=true;let supplementalLinks=[],linkPickMode=false,linkPickStart=null,linkIdCounter=0,linkEndpoints=[],linkScreenPoints=[];let doorRemoved=[],doorIntersections=[];let selectedHubId="auto",hubScreenPoints=[];let originalVariantCount=0,maxLengthAdjustment=0,invalidCorrectionCount=0;let hubNodeList=[];let assemblyProgress=1,assemblyFrame=null,assemblyRunning=false;let edges=[],groups=[],facets=[],hubSummary=[],hubTypes=[],foldSummary=[],facetSummary=[],stockPlan=null,vertices=[],viewYaw=0.6,viewPitch=0.35,zoom=1,canvasCtx=null;
+const dimensionIds=['dia','baseRise','lengthDeviation','tol','od','wall','stock','allow','kerf','trim','tabLength','tabCenter','boltDia','boltOffset','tabThickness','endRadius','hubStart','hubContact','hubThick','hubOffset','hubCollar','hubBoltDia','hubBoltFromTip','hubBoltPitch','jointGap','hubCenterDia','hubCenterWall','hubCenterLength','hubCenterStart','doorWidth','doorHeight','doorThickness','doorOffset','doorSlide'];
+const palette=['#6aaaf5','#7dcbbb','#e5b770','#c58ce5','#e585a8','#8bc3db','#a9c574','#d1d1df','#f59e72','#7ed5a7','#df7c76','#e1c0f5'];
+const uName={ftin:'ft, in',in:'in',m:'m',mm:'mm'};
+function asUnit(mm,u=$('units').value){if(u==='mm')return String(Number(mm.toFixed(2)));if(u==='m')return String(Number((mm/1000).toFixed(5)));if(u==='in')return String(Number((mm/25.4).toFixed(4)));let inches=mm/25.4,feet=Math.floor(inches/12),rem=inches-feet*12;return `${feet}' ${String(Number(rem.toFixed(3)))}\"`}
+function fromUnit(str,u=$('units').value){str=String(str).trim();if(u==='ftin'){let feet=0,inches=0,ft=str.match(/(-?\d+(?:\.\d+)?)\s*(?:ft|')/i),ins=str.match(/(\d+(?:\.\d+)?)\s*(?:in|\")/i);if(ft||ins){feet=ft?Number(ft[1]):0;inches=ins?Number(ins[1]):0;return (feet*12+inches)*25.4}return Number(str)*25.4}let x=Number(str);return x*(u==='m'?1000:u==='in'?25.4:1)}
+function setDim(id,mm){$(id).dataset.mm=String(mm);$(id).value=asUnit(mm)}
+function syncDim(id){let mm=fromUnit($(id).value);if(Number.isFinite(mm)&&(mm>=0||id==='hubCenterStart'||id==='doorOffset')){$(id).dataset.mm=String(mm)}else alert(id==='hubCenterStart'?'Invalid signed offset.':'Invalid dimension. Please enter a valid non-negative measurement.');$(id).value=asUnit(Number($(id).dataset.mm||0));}
+function changeUnits(){for(const id of dimensionIds)$(id).value=asUnit(Number($(id).dataset.mm||0));for(const id of ['dia','tol'])$(id+'Label').textContent=(id==='dia'?'Sphere diameter':'Length tolerance')+' ('+uName[$('units').value]+')';for(const id of ['od','wall','stock','allow']){const el=$(id).previousElementSibling;if(el&&el.tagName==='LABEL')el.textContent=({od:'Outside / width',wall:'Wall / depth',stock:'Stock length',allow:'End allowance per side'})[id]+' ('+uName[$('units').value]+')'}build()}
+const val=id=>dimensionIds.includes(id)?Number($(id).dataset.mm||0):Number($(id).value);
+const vec=(x,y,z)=>[x,y,z];const sub=(a,b)=>a.map((v,i)=>v-b[i]);const lerp=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t);const mag=a=>Math.hypot(...a);const norm=a=>a.map(v=>v/mag(a));
+// Offset each tube end from the shared hub. For equal-diameter circular members,
+// 2r + gap <= 2 t sin(theta/2) keeps the nearest parallel circular sections apart.
+// This is a conservative geometric setback; connector engagement still needs validation.
+function calculateEndSetbacks(){
+ const nodes=new Map();
+ for(const e of edges){for(const [p,q,side] of [[e.a,e.b,'a'],[e.b,e.a,'b']]){
+  const k=keyPoint(p);if(!nodes.has(k))nodes.set(k,[]);
+  nodes.get(k).push({edge:e,side,dir:norm(sub(q,p))});
+ }}
+ const setback=new Map(),r=val('od')/2,gap=Math.max(0,val('jointGap'));
+ if($('fam').value==='wood'&&$('woodTrim').checked){for(const e of edges){e.cutA=e.a;e.cutB=e.b;e.trimA=0;e.trimB=0;e.centerlineLength=e.length;}$('jointClearInfo').textContent='Timber joint-cut preview: adjoining beams are separated by 3D angled bisector planes. Cut-list lengths are centerline references only, NOT fabrication cut dimensions.';return;}
+ for(const [key,joins] of nodes){let t=0;
+  for(let i=0;i<joins.length;i++)for(let j=i+1;j<joins.length;j++){
+   const theta=angleBetween(joins[i].dir,joins[j].dir)*Math.PI/180;
+   if(theta>1e-5)t=Math.max(t,(2*r+gap)/(2*Math.sin(theta/2)));
+  }
+  setback.set(key,Math.max(t,r+gap/2));
+ }
+ let conflicts=0;
+ for(const e of edges){const L=mag(sub(e.b,e.a)),u=norm(sub(e.b,e.a));
+  let ta=setback.get(keyPoint(e.a))||0,tb=setback.get(keyPoint(e.b))||0;
+  if(ta+tb>=L){conflicts++;const ratio=Math.max(0,(L-0.1)/(ta+tb));ta*=ratio;tb*=ratio;}
+  e.trimA=ta;e.trimB=tb;e.cutA=e.a.map((v,i)=>v+u[i]*ta);e.cutB=e.b.map((v,i)=>v-u[i]*tb);
+  e.centerlineLength=L;e.length=Math.max(0.1,L-ta-tb);
+ }
+ $('jointClearInfo').textContent=`Tube ends setback automatically from each hub (minimum clearance ${asUnit(gap)} ${uName[$('units').value]}). ${conflicts?conflicts+' members are too short to achieve full clearance; change geometry/profile.':'No over-shortened members detected.'}`;
+ $('jointClearInfo').style.color=conflicts?'#ffc28b':'#9bd3bd';
+}
+function collectHubNodes(){
+ const map=new Map();
+ for(let ei=0;ei<edges.length;ei++){
+  const e=edges[ei];
+  for(const [pt,to,trim,side] of [[e.a,e.b,e.trimA||0,'a'],[e.b,e.a,e.trimB||0,'b']]){
+   const id=keyPoint(pt);if(!map.has(id))map.set(id,{id,point:pt,arms:[]});
+   map.get(id).arms.push({edge_index:ei,side,dir:norm(sub(to,pt)),trim,group:e.group});
+  }
+ }
+ hubNodeList=[...map.values()].sort((a,b)=>b.point[2]-a.point[2]);
+ hubNodeList.forEach((n,i)=>n.number=i+1);
+ // Preserve an existing selection when the dome is rebuilt.
+ const select=$('hubInspect'),wanted=select.value;
+ const vals=[...new Set(hubNodeList.map(n=>n.arms.length))].sort((a,b)=>a-b);
+ select.innerHTML='<option value="auto">Automatic (highest available)</option>'+vals.map(v=>`<option value="${v}">${v}-arm (${hubNodeList.filter(n=>n.arms.length===v).length} hubs)</option>`).join('');
+ select.value=vals.map(String).includes(wanted)?wanted:'auto';
+ const nodeSel=$('hubNode'),old=selectedHubId;
+ nodeSel.innerHTML='<option value="auto">Automatic</option>'+hubNodeList.map(n=>`<option value="${n.id}">H${String(n.number).padStart(3,'0')} · ${n.arms.length}-way</option>`).join('');
+ selectedHubId=hubNodeList.some(n=>n.id===old)?old:'auto';nodeSel.value=selectedHubId;
+ const tabSel=$('tabHubNode');if(tabSel){tabSel.innerHTML=nodeSel.innerHTML;tabSel.value=selectedHubId;}
+}
+function hubParameters(){
+ return {start:Math.max(0,val('hubStart')),contact:Math.max(0,val('hubContact')),thick:Math.max(0,val('hubThick')),taper:Math.max(0,Math.min(60,Number($('hubTaper').value||0))),offset:Math.max(0,val('hubOffset')),collar:Math.max(0,val('hubCollar')),boltDia:Math.max(0,val('hubBoltDia')),boltFromTip:Math.max(0,val('hubBoltFromTip')),boltRotation:Number($('hubBoltRotation').value||0),boltCount:Number($('hubBoltCount').value)||1,boltPitch:Math.max(0,val('hubBoltPitch')),placement:$('hubPlacement').value};
+}
+function hubArmShape(arm,hp=hubParameters()){
+ const D=val('od'),wall=val('wall'),tubeID=Math.max(0,D-2*wall),radius=D/2;
+ // Outer socket: tube inserts into distal collar; inner insert: connector enters tube.
+ const mouth=hp.placement==='external'?radius+hp.offset+hp.thick:Math.max(.1,tubeID/2-hp.offset);
+ const tip=Math.max(hp.start+hp.contact,arm.trim+hp.contact);
+ const shoulder=Math.max(hp.start,tip-Math.min(hp.collar,tip-hp.start));
+ const throat=Math.max(Math.max(.6,mouth*.20),mouth-Math.tan(hp.taper*Math.PI/180)*(shoulder-hp.start));
+ return {t0:hp.start,t1:shoulder,t2:tip,r0:Math.min(mouth,throat),r1:mouth,innerMouth:Math.max(.05,mouth-hp.thick),hp};
+}
+function validateHubs(){
+ if($('ends').value!=='hub')return;
+ const hp=hubParameters(),warn=[];
+ if(hp.contact<=0||hp.thick<=0)warn.push('Contact length and connector wall thickness must be positive.');
+ if(hp.collar<hp.contact)warn.push('Straight socket collar must be at least as long as tube engagement, otherwise the taper intersects the tube.');
+ if(hp.boltDia>0){
+  for(let i=0;i<hp.boltCount;i++){
+   const setback=hp.boltFromTip+i*hp.boltPitch;
+   if(setback-hp.boltDia/2<=0||setback+hp.boltDia/2>hp.contact)warn.push('A bolt hole falls outside the tube engagement zone.');
+   if(setback+hp.boltDia/2>hp.collar)warn.push('A bolt hole is outside the straight collar.');
+  }
+ }
+ if(hp.placement==='internal'&&2*hp.thick>=Math.max(0,val('od')-2*val('wall'))-2*hp.offset)warn.push('Insert wall is too thick for the selected tube bore.');
+ if(hp.boltDia>val('od'))warn.push('Bolt diameter exceeds tube outside diameter.');
+ if(hp.contact>0&&hp.start>=hp.contact+Math.max(0,val('od')*4))warn.push('Sleeve starts unusually far from hub center.');
+ const div=$('hubCheck');div.textContent=warn.length?'⚠ '+[...new Set(warn)].join(' '):'Dimensions pass basic range checks. Connector interference, bolt edge distances, and structural safety are not verified.';
+ div.style.color=warn.length?'#ffc28b':'#9bd3bd';
+}
+function selectedHub(){
+ if(selectedHubId!=='auto'){const match=hubNodeList.find(n=>n.id===selectedHubId);if(match)return match;}
+ const degree=$('hubInspect').value;
+ if(degree==='auto')return hubNodeList.find(x=>[6,5,4].includes(x.arms.length))||hubNodeList[0];
+ return hubNodeList.find(x=>x.arms.length===Number(degree))||hubNodeList[0];
+}
+function selectHubNode(node){if(!node)return;selectedHubId=node.id;$('hubNode').value=node.id;if($('tabHubNode'))$('tabHubNode').value=node.id;$('hubInspect').value='auto';$('hubView').value='detail';zoom=1;render();}
+function showHubInfo(node){const panel=$('selectedHubInfo');if(!node){panel.textContent='No hub available.';return;}
+ const arms=node.arms;let data=[];for(let i=0;i<arms.length;i++)for(let j=i+1;j<arms.length;j++)data.push({a:i+1,b:j+1,ang:angleBetween(arms[i].dir,arms[j].dir)});
+ data.sort((a,b)=>a.ang-b.ang);
+ const fmt=n=>n.toFixed(2)+'°'; const adjacent=[];
+ // Angular order in tangent plane of local outward normal: useful for fabrication.
+ const normal=norm(node.point),reference=norm(cross(Math.abs(normal[2])<.9?[0,0,1]:[0,1,0],normal)),side=norm(cross(normal,reference));
+ const ring=arms.map((arm,i)=>({i,phi:Math.atan2(dot(arm.dir,side),dot(arm.dir,reference))})).sort((a,b)=>a.phi-b.phi);
+ for(let i=0;i<ring.length;i++){const x=ring[i],y=ring[(i+1)%ring.length];adjacent.push('S'+(arms[x.i].edge_index+1)+' ↔ S'+(arms[y.i].edge_index+1)+': '+fmt(angleBetween(arms[x.i].dir,arms[y.i].dir)));}
+ const pairs=data.length?data.map(a=>`<div>Arm ${a.a}–${a.b}: <b>${fmt(a.ang)}</b></div>`).join(''):'—';
+ const dims=arms.map(a=>{const e=edges[a.edge_index];return `<div>S${String(a.edge_index+1).padStart(3,'0')}: <b>${e?asUnit(e.length):'—'} ${uName[$('units').value]}</b> (${e?e.length.toFixed(2):'—'} mm)</div>`}).join('');
+ panel.innerHTML=`<b>H${String(node.number).padStart(3,'0')} · ${arms.length}-arm hub</b><div>Coordinates: ${node.point.map(v=>v.toFixed(1)).join(', ')} mm</div><div style="margin-top:6px"><b>Connected member lengths (centerline):</b></div>${dims}<div style="margin-top:6px">Adjacent strut angles (3D):</div>${adjacent.map(v=>'<div>'+v+'</div>').join('')}<details><summary>All ${data.length} pairwise angles</summary>${pairs}</details>${$('fam').value==='wood'?`<div style="margin-top:8px"><b>Timber section:</b> ${asUnit(val('od'))} × ${asUnit(val('wall'))} ${uName[$('units').value]}</div><div>Timber end trim: ${$('woodTrim').checked?'bisector-plane preview':'disabled'}</div><div style="color:#eabb79">Angles are strut-axis angles, not compound miter/bevel saw settings; length is centerline, not long-point cut length.</div>`:`<div>Center cylinder: ${$('hubCenterOn').checked?'enabled':'off'}</div>`}`;
+}
+function baseStyleEnabled(){return $('baseStyle').value==='straight' && val('cut')<0.999999;}
+function baseWarp(p,R,zCut){
+ if(!baseStyleEnabled())return p;
+ const height=Math.max(.001,Math.min(val('baseRise'),Math.max(.001,R-zCut)));
+ const radial=Math.hypot(p[0],p[1]),baseRad=Math.sqrt(Math.max(0,R*R-zCut*zCut));
+ if(radial<1e-10||p[2]>=zCut+height)return p;
+ const t=Math.max(0,Math.min(1,(p[2]-zCut)/height)),smooth=t*t*(3-2*t);
+ const target=(1-smooth)*baseRad+smooth*radial;
+ return [p[0]*target/radial,p[1]*target/radial,p[2]];
+}
+function baseBoundary(p,R,zCut){
+ if(!baseStyleEnabled())return p;
+ const radial=Math.hypot(p[0],p[1]),baseRad=Math.sqrt(Math.max(0,R*R-zCut*zCut));
+ return radial>1e-8?[p[0]*baseRad/radial,p[1]*baseRad/radial,zCut]:p;
+}
+function updateOptionVisibility(){
+ $('baseControls').style.display=$('baseStyle').value==='straight'?'block':'none';
+ $('lengthControls').style.display=$('lengthMode').value==='reduce'?'block':'none';
+ $('baseInfo').textContent=val('cut')>=.999999?'A full sphere has no practical ground-level ring; select a partial dome.':'This reshapes the lower band into a near-vertical circular footprint; the default already has a level cut plane.';
+}
+function doorDefinition(){
+ const rad=Number($('doorAngle').value||0)*Math.PI/180,R=val('dia')/2;
+ // zCut is the actual world-space base plane, not necessarily Z=0. The sphere
+ // intersects that plane at a smaller radius than R for partial domes.
+ const zCut=(1-2*val('cut'))*R,baseRadius=Math.sqrt(Math.max(0,R*R-zCut*zCut));
+ const n=[Math.cos(rad),Math.sin(rad),0],t=[-Math.sin(rad),Math.cos(rad),0];
+ const slide=val('doorSlide'),offset=val('doorOffset');
+ // At a given tangential shift, find the actual front intersection of the
+ // circular base. Keep using the outer edge when the door is outside the footprint.
+ const front=Math.sqrt(Math.max(0,baseRadius*baseRadius-slide*slide));
+ const center=[n[0]*(front+offset)+t[0]*slide,n[1]*(front+offset)+t[1]*slide,zCut];
+ return {enabled:$('doorEnabled').checked,width:val('doorWidth'),height:val('doorHeight'),thickness:val('doorThickness'),offset,slide,base_radius_mm:baseRadius,base_z_mm:zCut,angle_deg:Number($('doorAngle').value)||0,n,t,center,treatment:$('doorTreatment').value};}
+function doorCorners(d){return [[-1,0],[1,0],[1,1],[-1,1]].map(([side,h])=>[d.center[0]+d.t[0]*side*d.width/2,d.center[1]+d.t[1]*side*d.width/2,d.base_z_mm+h*d.height]);}
+// Cohen-Sutherland-style clipping in door tangent-coordinate / vertical height rectangle.
+function doorIntersects(e,d){if(!d.enabled||d.width<=0||d.height<=0)return false;
+ const r0=[dot(sub(e.a,d.center),d.t),e.a[2]-d.base_z_mm],r1=[dot(sub(e.b,d.center),d.t),e.b[2]-d.base_z_mm];let lo=0,hi=1;
+ const delta=[r1[0]-r0[0],r1[1]-r0[1]],constraints=[[-d.width/2,d.width/2,0],[0,d.height,1]];
+ for(const [min,max,k] of constraints){if(Math.abs(delta[k])<1e-9){if(r0[k]<min||r0[k]>max)return false;}else {let a=(min-r0[k])/delta[k],b=(max-r0[k])/delta[k];lo=Math.max(lo,Math.min(a,b));hi=Math.min(hi,Math.max(a,b));if(lo>hi)return false;}}
+ // Front half only, not opposite/back side of the dome. Allow the plane to sit forward
+ // of the curved shell: this is a projected doorway clearance zone, not a true CAD cut.
+ let front0=dot(e.a,d.n),front1=dot(e.b,d.n),fmax=Math.max(front0+(front1-front0)*lo,front0+(front1-front0)*hi);
+ return fmax>Math.max(0,val('dia')/8);
+}
+function applyDoorOpening(){doorRemoved=[];doorIntersections=[];const d=doorDefinition();if(!d.enabled){$('doorStatus').textContent='Door disabled.';return;}
+ const matches=edges.filter(e=>doorIntersects(e,d));doorIntersections=matches.map(e=>({a:e.a,b:e.b,length_mm:e.length}));
+ if(d.treatment==='remove'){doorRemoved=matches;const set=new Set(matches);edges=edges.filter(e=>!set.has(e));}
+ $('doorPlacementInfo').textContent=`Base elevation ${asUnit(d.base_z_mm)} ${uName[$('units').value]} (model coordinates); footprint radius ${asUnit(d.base_radius_mm)} ${uName[$('units').value]}. ${Math.abs(d.slide)>d.base_radius_mm?'Warning: tangential offset lies beyond the base circle.':''}`;
+ $('doorStatus').textContent=`${matches.length} intersecting member(s) ${d.treatment==='remove'?'removed from active cut list':'marked for review'}. Frame geometry is a visual overlay; frame members are not yet included in the stock/BOM.`;
+}
+function endpointsForLinks(){
+ const map=new Map();for(const e of edges){for(const p of [e.a,e.b]){const k=keyPoint(p);if(!map.has(k))map.set(k,{id:'hub:'+k,point:p,label:'Hub '+(map.size+1)});}}
+ const result=[...map.values()];
+ if($('doorEnabled').checked){doorCorners(doorDefinition()).forEach((p,i)=>result.push({id:'door:'+i,point:p,label:'Door corner '+(i+1)}));}
+ return result;
+}
+function updateLinkControls(){
+ linkEndpoints=endpointsForLinks();const active=new Set(linkEndpoints.map(e=>e.id));
+ for(const id of ['braceA','braceB']){const el=$(id),old=el.value;el.innerHTML='<option value="">Choose endpoint</option>'+linkEndpoints.map(e=>`<option value="${e.id}">${e.label}</option>`).join('');el.value=active.has(old)?old:'';}
+ $('braceStatus').textContent=linkPickMode?(linkPickStart?'Select another endpoint to add a strut from the same start point; use New start point to change it.':'Select the first hub or doorway corner in the dome view.'):`${supplementalLinks.length} additional strut(s).`; 
+ $('braceList').innerHTML=supplementalLinks.map(l=>`<div style="display:flex;justify-content:space-between;gap:8px;margin:5px 0"><span>${l.id}: ${l.aLabel} → ${l.bLabel}</span><button type="button" data-brace-remove="${l.id}" style="width:auto;padding:3px 8px">Remove</button></div>`).join('');
+ $('braceList').querySelectorAll('[data-brace-remove]').forEach(btn=>btn.onclick=()=>{supplementalLinks=supplementalLinks.filter(l=>l.id!==btn.dataset.braceRemove);build()});
+ $('bracePick').textContent=linkPickMode?'Linking active — click points':'Start linking by clicking';
+}
+function insertSupplementalLink(aId,bId){
+ const a=linkEndpoints.find(e=>e.id===aId),b=linkEndpoints.find(e=>e.id===bId);
+ if(!a||!b){$('braceStatus').textContent='Select two valid endpoints.';return false;}
+ if(a.id===b.id||mag(sub(a.point,b.point))<.01){$('braceStatus').textContent='Endpoints must be different.';return false;}
+ if(supplementalLinks.some(l=>[l.aId,l.bId].sort().join('|')===[aId,bId].sort().join('|'))){$('braceStatus').textContent='That link already exists.';return false;}
+ supplementalLinks.push({id:'ADD-'+String(++linkIdCounter).padStart(3,'0'),aId,bId,aLabel:a.label,bLabel:b.label});/* Keep interactive linking active, including the anchor point, for multi-arm braces. */if(!linkPickMode)linkPickStart=null;build();return true;
+}
+function pickLinkPoint(endpoint){
+ if(!linkPickMode)return;
+ if(!linkPickStart){linkPickStart=endpoint.id;$('braceA').value=endpoint.id;$('braceB').value='';updateLinkControls();render();}
+ else {const a=linkPickStart;if(insertSupplementalLink(a,endpoint.id)){linkPickStart=a;$('braceA').value=a;updateLinkControls();render();}}
+}
+function addSupplementalEdges(){
+ linkEndpoints=endpointsForLinks();let missing=0;
+ for(const l of supplementalLinks){const a=linkEndpoints.find(e=>e.id===l.aId),b=linkEndpoints.find(e=>e.id===l.bId);if(!a||!b){missing++;continue;}
+ const length=mag(sub(a.point,b.point));if(length<.01)continue;
+ edges.push({a:a.point,b:b.point,length,additional:true,additionalId:l.id,from:a.label,to:b.label});
+ }
+ return missing;
+}
+function build(){updateOptionVisibility();const t=(1+Math.sqrt(5))/2;let ico=[vec(-1,t,0),vec(1,t,0),vec(-1,-t,0),vec(1,-t,0),vec(0,-1,t),vec(0,1,t),vec(0,-1,-t),vec(0,1,-t),vec(t,0,-1),vec(t,0,1),vec(-t,0,-1),vec(-t,0,1)].map(norm);
+const faces=[[0,11,5],[0,5,1],[0,1,7],[0,7,10],[0,10,11],[1,5,9],[5,11,4],[11,10,2],[10,7,6],[7,1,8],[3,9,4],[3,4,2],[3,2,6],[3,6,8],[3,8,9],[4,9,5],[2,4,11],[6,2,10],[8,6,7],[9,8,1]];
+const f=val('freq'),R=val('dia')/2,zCut=(1-2*val('cut'))*R,angle=val('rot')*Math.PI/180;const raw=[],ids=new Map(),set=new Set(),faceIndices=[];
+function put(p){p=norm(p);const q=[(p[0]*Math.cos(angle)-p[1]*Math.sin(angle))*R,(p[0]*Math.sin(angle)+p[1]*Math.cos(angle))*R,p[2]*R];const key=q.map(v=>Math.round(v*1e5)).join(':');if(!ids.has(key)){ids.set(key,raw.length);raw.push(baseWarp(q,R,zCut))}return ids.get(key)}
+for(const [a,b,c] of faces){let grid=[];for(let i=0;i<=f;i++){grid[i]=[];for(let j=0;j<=f-i;j++){let k=f-i-j;grid[i][j]=put(ico[a].map((v,idx)=>(ico[a][idx]*i+ico[b][idx]*j+ico[c][idx]*k)/f))}}const add=(x,y)=>{if(x===y)return;const k=[x,y].sort((p,q)=>p-q).join(':');set.add(k)};for(let i=0;i<f;i++)for(let j=0;j<f-i;j++){let a=grid[i][j],b=grid[i+1][j],c=grid[i][j+1];add(a,b);add(b,c);add(c,a);faceIndices.push([a,b,c]);if(i+j<f-1){let d=grid[i+1][j+1];add(b,d);add(d,c);faceIndices.push([b,d,c])}}}
+const eps=1e-8;edges=[];for(const key of set){let [ia,ib]=key.split(':').map(Number),a=raw[ia],b=raw[ib],h1=a[2]>=zCut-eps,h2=b[2]>=zCut-eps;if(!h1&&!h2)continue;if(h1!==h2){const frac=(zCut-a[2])/(b[2]-a[2]);let intersection=baseBoundary(lerp(a,b,frac),R,zCut);if(!h1)a=intersection;else b=intersection;}if(mag(sub(b,a))>1e-5)edges.push({a,b,length:mag(sub(a,b))});}
+// Boundary segments are clipped only; add a base ring when dome is not a complete sphere.
+if(zCut>-R+0.0001){const endpoints=new Map();for(const e of edges)for(const p of [e.a,e.b])if(Math.abs(p[2]-zCut)<1e-4){endpoints.set(p.map(v=>Math.round(v*1e4)).join(':'),p)}const boundary=[...endpoints.values()].sort((a,b)=>Math.atan2(a[1],a[0])-Math.atan2(b[1],b[0]));for(let i=0;i<boundary.length;i++){const a=boundary[i],b=boundary[(i+1)%boundary.length];if(mag(sub(b,a))>1e-5)edges.push({a,b,length:mag(sub(a,b)),base:true});}}
+// Clip each spherical triangular facet against the dome base plane, then triangulate
+facets=[];const clippedPanelDiagonals=[];
+for(const tri of faceIndices){let poly=tri.map(id=>raw[id]);const out=[];
+ for(let i=0;i<poly.length;i++){let a=poly[i],b=poly[(i+1)%poly.length],ina=a[2]>=zCut-eps,inb=b[2]>=zCut-eps;
+ if(ina)out.push(a);if(ina!==inb)out.push(baseBoundary(lerp(a,b,(zCut-a[2])/(b[2]-a[2])),R,zCut));
+ }
+ // A triangle clipped by a horizontal plane may have FOUR corners. Its fan
+ // triangulation must also have a physical member along the interior diagonal;
+ // otherwise the reported triangular panel doesn't match the built frame.
+ if(out.length===4 && mag(sub(out[0],out[2]))>1e-5){
+  clippedPanelDiagonals.push({a:out[0],b:out[2],length:mag(sub(out[0],out[2])),panelDiagonal:true});
+ }
+ for(let j=1;j<out.length-1;j++){let t=[out[0],out[j],out[j+1]];if(mag(cross(sub(t[1],t[0]),sub(t[2],t[0])))>1e-6)facets.push(t)}
+}
+// Add the missing physical diagonal only once, and include it in BOM / exports.
+const existingPanelEdges=new Set(edges.map(e=>[keyPoint(e.a),keyPoint(e.b)].sort().join('|')));
+for(const e of clippedPanelDiagonals){const k=[keyPoint(e.a),keyPoint(e.b)].sort().join('|');if(!existingPanelEdges.has(k)){edges.push(e);existingPanelEdges.add(k)}}
+applyDoorOpening();addSupplementalEdges();if($('ends').value!=='crimp')calculateEndSetbacks();else for(const e of edges){e.cutA=e.a;e.cutB=e.b;e.centerlineLength=e.length;e.trimA=0;e.trimB=0;}
+// First record geometrically designed tube lengths and the original cut-group count.
+ const tol=Math.max(.01,val('tol'));
+ function originalGroupsCount(sorted){let g=[];for(const e of sorted){let match=g.find(x=>Math.abs(x.mean-e.designLength)<=tol);if(!match){match={mean:e.designLength,members:[]};g.push(match)}match.members.push(e);match.mean=match.members.reduce((s,x)=>s+x.designLength,0)/match.members.length;}return g.length;}
+ const sorted=[...edges].sort((a,b)=>a.length-b.length);
+ sorted.forEach(e=>e.designLength=e.length);
+ originalVariantCount=originalGroupsCount(sorted);maxLengthAdjustment=0;invalidCorrectionCount=0;groups=[];
+ if($('lengthMode').value==='reduce'){
+  const limit=Math.max(0,val('lengthDeviation'));
+  // Greedy interval clustering is minimum-group for a fixed symmetric bound:
+  // all covered cut lengths lie in [first, first + 2*limit].
+  for(let i=0;i<sorted.length;){let j=i+1;while(j<sorted.length&&sorted[j].designLength-sorted[i].designLength<=2*limit+1e-7)j++;
+   const chunk=sorted.slice(i,j),target=(chunk[0].designLength+chunk[chunk.length-1].designLength)/2;
+   let g={mean:target,members:chunk};groups.push(g);
+   for(const e of chunk){let delta=target-e.designLength;maxLengthAdjustment=Math.max(maxLengthAdjustment,Math.abs(delta));
+    const u=norm(sub(e.cutB,e.cutA));e.cutA=e.cutA.map((v,k)=>v-u[k]*delta/2);e.cutB=e.cutB.map((v,k)=>v+u[k]*delta/2);
+    e.length=target;e.length_delta_mm=delta;
+    // Keep the socket generator's trim metadata consistent with repositioned ends.
+    e.trimA=(e.trimA||0)-delta/2;e.trimB=(e.trimB||0)-delta/2;
+    if(e.trimA<-1e-6||e.trimB<-1e-6)invalidCorrectionCount++;
+
+   }i=j;
+  }
+ }else{
+  for(const e of sorted){let g=groups.find(g=>Math.abs(g.mean-e.length)<=tol);if(!g){g={mean:e.length,members:[]};groups.push(g)}g.members.push(e);g.mean=g.members.reduce((s,x)=>s+x.length,0)/g.members.length;e.length_delta_mm=0;}
+ }
+ groups.sort((a,b)=>a.mean-b.mean);groups.forEach((g,i)=>g.members.forEach(e=>e.group=i));
+ computeAngles();collectHubNodes();updateReport();refreshMemberDrawings();updateLinkControls();render();}
+const dot=(a,b)=>a.reduce((sum,v,i)=>sum+v*b[i],0);
+const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const angleBetween=(a,b)=>Math.acos(Math.max(-1,Math.min(1,dot(a,b)/(mag(a)*mag(b)))))*180/Math.PI;
+const keyPoint=p=>p.map(v=>Math.round(v*10000)).join(',');
+function computeAngles(){
+ const nodes=new Map();for(const edge of edges){for(const [from,to] of [[edge.a,edge.b],[edge.b,edge.a]]){const k=keyPoint(from);if(!nodes.has(k))nodes.set(k,[]);nodes.get(k).push(sub(to,from))}}
+ const types=new Map();for(const directions of nodes.values()){const k=directions.length;const angles=[];for(let i=0;i<directions.length;i++)for(let j=i+1;j<directions.length;j++)angles.push(angleBetween(directions[i],directions[j]));angles.sort((a,b)=>a-b);let t=types.get(k);if(!t){t={count:0,examples:[]};types.set(k,t)}t.count++;if(!t.examples.length)t.examples=angles.map(v=>Number(v.toFixed(1)));}
+ hubTypes=[...types].map(([degree,data])=>({degree,...data})).sort((a,b)=>a.degree-b.degree);
+ const hub=new Map();for(const directions of nodes.values()){for(let i=0;i<directions.length;i++)for(let j=i+1;j<directions.length;j++){const deg=angleBetween(directions[i],directions[j]);const k=(Math.round(deg*10)/10).toFixed(1);hub.set(k,(hub.get(k)||0)+1)}}
+ hubSummary=[...hub].map(([angle,count])=>({angle:Number(angle),count})).sort((a,b)=>a.angle-b.angle);
+ const facet=new Map();for(const [a,b,c] of facets){let deg=[angleBetween(sub(b,a),sub(c,a)),angleBetween(sub(a,b),sub(c,b)),angleBetween(sub(a,c),sub(b,c))].sort((x,y)=>x-y);const k=deg.map(v=>(Math.round(v*10)/10).toFixed(1)).join(' / ');facet.set(k,(facet.get(k)||0)+1)}
+ facetSummary=[...facet].map(([angles,count])=>({angles,count})).sort((a,b)=>b.count-a.count);
+ // Only count joints shared by real, uncut triangles. Artificial diagonals in clipped quads are excluded.
+ const realEdgeSet=new Set(edges.map(e=>[keyPoint(e.a),keyPoint(e.b)].sort().join('|')));
+ const trianglesByEdge=new Map();
+ for(const tri of facets){const normal=norm(cross(sub(tri[1],tri[0]),sub(tri[2],tri[0])));for(let i=0;i<3;i++){const a=keyPoint(tri[i]),b=keyPoint(tri[(i+1)%3]),key=[a,b].sort().join('|');if(!realEdgeSet.has(key))continue;if(!trianglesByEdge.has(key))trianglesByEdge.set(key,[]);trianglesByEdge.get(key).push(normal)}}
+ const folds=new Map();for(const normals of trianglesByEdge.values()){if(normals.length!==2)continue;const fold=180-angleBetween(normals[0],normals[1]);const k=(Math.round(fold*10)/10).toFixed(1);folds.set(k,(folds.get(k)||0)+1)}
+ foldSummary=[...folds].map(([angle,count])=>({angle:Number(angle),count})).sort((a,b)=>a.angle-b.angle);
+}
+function nestStock(pieces,length,kerf,trim){const usable=length-2*trim;if(usable<=0)return {bins:[],oversize:pieces.length,util:0};let bins=[],oversize=0;
+ for(const piece of [...pieces].sort((a,b)=>b-a)){const needed=piece+kerf;if(needed>usable+1e-7){oversize++;continue}let bin=bins.find(b=>b.used+needed<=usable+1e-7);if(!bin){bin={used:0,cuts:[]};bins.push(bin)}bin.used+=needed;bin.cuts.push(piece)}
+ const cutLength=bins.reduce((sum,b)=>sum+b.cuts.reduce((s,v)=>s+v,0),0);
+ return {bins,oversize,util:bins.length?cutLength/(bins.length*length):0};
+}
+function computedTab(){const d=val('od');return d*Math.PI/2;}
+function syncAutomaticTabs(){const width=computedTab();for(const id of ['tabWidth']){const field=$(id);field.dataset.mm=String(width);field.value=asUnit(width);}}
+function toggleTabs(){ $('tabFields').style.display=$('ends').value==='crimp'?'block':'none';$('hubFields').style.display=$('ends').value==='hub'?'block':'none';syncAutomaticTabs();validateTabs();validateHubs();}
+function validateTabs(){if($('ends').value!=='crimp')return;const l=val('tabLength'),r=val('endRadius'),width=computedTab(),c=val('tabCenter'),d=val('boltDia'),h=val('boltOffset'),t=val('tabThickness');let warnings=[];if([l,r,c,d,h,t].some(x=>!Number.isFinite(x)||x<=0))warnings.push('All tab dimensions must be positive.');if(d/2>h||h+d/2>l)warnings.push('Bolt hole does not fit entirely within tab length.');if(r<width/2)warnings.push('Clip radius must be at least half the flattened width for this arc construction.');if(r>=width/2&&l<r-Math.sqrt(Math.max(0,r*r-width*width/4)))warnings.push('Tab length is too short for the chosen end arc.');if(t<=0)warnings.push('Tab thickness must be positive.');$('tabCheck').textContent=warnings.length?'⚠ '+warnings.join(' '):'Tab parameters pass basic dimensional checks; forming feasibility and strength are not validated.'; $('tabCheck').style.color=warnings.length?'#ffc28b':'#9bd3bd';}
+function groupName(i){return String.fromCharCode(65+i%26)+(i>=26?Math.floor(i/26):'')}
+function geometry(){const fam=$('fam').value,od=val('od'),wall=val('wall');const area=fam==='wood'?od*wall:Math.PI/4*(od*od-Math.max(0,od-2*wall)**2);return {lumber_end_clearance_trim: fam==='wood'&&$('woodTrim').checked, family:fam,size:$('size').selectedOptions[0]?.text||'Custom',od,wall,density:val('density'),stock:val('stock'),area};}
+function updateReport(){syncAutomaticTabs();validateTabs();validateHubs();const c=geometry(),len=edges.reduce((s,e)=>s+e.length,0),mass=len*c.area*1e-9*c.density;
+ $('nstruts').textContent=edges.length;$('length').textContent=asUnit(len)+' '+uName[$('units').value];$('weight').textContent=mass.toFixed(2)+' kg';$('variants').textContent=groups.length;$('originalVariants').textContent=originalVariantCount;$('maxCorrection').textContent=asUnit(maxLengthAdjustment)+' '+uName[$('units').value];$('standardNotice').textContent=$('lengthMode').value==='reduce'?`Reduced ${originalVariantCount} to ${groups.length} cut families (max ${asUnit(maxLengthAdjustment)} ${uName[$('units').value]} per member). ${invalidCorrectionCount?invalidCorrectionCount+' member(s) extend beyond their original hub center: reduce the permitted length change. ':' '}Connector engagement and exact hub-center fit may change; confirm before fabrication.`:'As-designed geometry; the existing tolerance groups similar lengths for reporting without standardizing physical cuts.'; 
+ const stock=c.stock,kerf=val('kerf'),trim=val('trim'),allow=val('allow');const required=edges.map(e=>e.length+2*allow);
+ stockPlan=nestStock(required,stock,kerf,trim);
+ $('stocks').textContent=stockPlan.oversize?`${stockPlan.bins.length} + ${stockPlan.oversize} overlength` :String(stockPlan.bins.length);
+ $('utilization').textContent=(stockPlan.util*100).toFixed(1)+'%';$('stockWarning').textContent=stockPlan.oversize?`${stockPlan.oversize} strut(s) exceed usable stock length — longer material or splices needed.`:'';
+ $('cutrows').innerHTML=groups.map((g,i)=>{let p=nestStock(g.members.map(e=>e.length+2*allow),stock,kerf,trim);let count=p.bins.length+(p.oversize?' ⚠'+p.oversize:'');return `<tr><td><span class="group-chip"><i class="group-dot" style="background:${palette[i%palette.length]}"></i>${String.fromCharCode(65+i%26)}${i>=26?Math.floor(i/26):''}</span></td><td>${g.members.length}</td><td>${asUnit(g.mean)}</td><td>${asUnit(g.mean,'mm')} mm</td><td>${count}</td></tr>`}).join('');
+ $('primaryHeader').textContent=uName[$('units').value];$('secondaryHeader').textContent='mm';
+ $('dual').textContent=`Profile: ${asUnit(c.od)} ${uName[$('units').value]} (${(c.od/25.4).toFixed(3)} in / ${c.od.toFixed(2)} mm) × ${asUnit(c.wall)} ${uName[$('units').value]} (${(c.wall/25.4).toFixed(3)} in / ${c.wall.toFixed(2)} mm)`;
+ $('diaDual').textContent=`Secondary: ${asUnit(val('dia'),'in')} in / ${asUnit(val('dia'),'mm')} mm`;
+ const inv=[...new Set(hubNodeList.map(n=>n.arms.length))].sort((a,b)=>a-b).map(k=>({arms:k,qty:hubNodeList.filter(n=>n.arms.length===k).length}));
+ $('hubInventory').innerHTML=inv.map(r=>`<tr><td>${r.arms}</td><td>${r.qty}</td><td>${r.qty*r.arms}</td><td>${r.qty*r.arms*hubParameters().boltCount}</td></tr>`).join('');
+ $('hubSummaryNote').textContent=$('ends').value==='hub'?`${hubNodeList.length} connectors, ${hubNodeList.reduce((a,n)=>a+n.arms.length,0)} socket arms; holes are preview markers, not bored solids.`:'Set end style to Multi-socket tapered hub to visualize these connectors.';
+ const coveringAreaM2=facets.reduce((total,tri)=>total+mag(cross(sub(tri[1],tri[0]),sub(tri[2],tri[0])))*0.5/1000000,0);
+ $('coverEstimate').textContent=$('coverEnabled').checked?`Surface area: ${coveringAreaM2.toFixed(2)} m² · with ${Number($('coverWaste').value||0)}% waste: ${(coveringAreaM2*(1+Number($('coverWaste').value||0)/100)).toFixed(2)} m² · selected thickness ${$('coverThickness').value} (primary units). No panel cuts modeled.`:'Enable covering to estimate exterior surface area. No panel solids or cutouts are generated.';
+ $('angleTypes').textContent=hubSummary.length;$('facetTypes').textContent=facetSummary.length;
+ $('hubAngles').innerHTML=hubSummary.map(x=>`<tr><td>${x.angle.toFixed(1)}°</td><td>${x.count}</td></tr>`).join('');
+ $('hubTypes').innerHTML=hubTypes.map(x=>`<tr><td>${x.degree}</td><td>${x.count}</td><td title='Representative pairwise member angles'>${x.examples.slice(0,5).map(v=>v+'°').join(', ')}${x.examples.length>5?' …':''}</td></tr>`).join('');
+ $('foldAngles').innerHTML=foldSummary.map(x=>`<tr><td>${x.angle.toFixed(1)}°</td><td>${x.count}</td></tr>`).join('');
+ $('facetAngles').innerHTML=facetSummary.map(x=>`<tr><td>${x.angles}°</td><td>${x.count}</td></tr>`).join('');
+}
+function setupCollapsibleSections(){
+ document.querySelectorAll('aside section,.report > section').forEach((sec,index)=>{
+  const h=sec.querySelector(':scope > h3');if(!h)return;
+  const content=document.createElement('div');content.className='section-content';
+  while(h.nextSibling)content.appendChild(h.nextSibling);
+  const title=h.textContent;h.remove();const btn=document.createElement('button');
+  btn.type='button';btn.className='section-toggle';btn.setAttribute('aria-expanded','true');
+  btn.innerHTML=`<span>${title}</span><span class="arrow" aria-hidden="true">⌄</span>`;
+  btn.addEventListener('click',()=>{const open=btn.getAttribute('aria-expanded')!=='true';btn.setAttribute('aria-expanded',String(open));content.hidden=!open;});
+  sec.append(btn,content);
+ });
+ // Right-side report uses h3 headings with mixed direct siblings rather than sections.
+ const report=document.querySelector('.report');if(report){
+  const nodes=Array.from(report.childNodes);let active=null;
+  for(const n of nodes){if(n.nodeType===1&&n.tagName==='H3'){
+    active=document.createElement('section');active.className='report-section';report.insertBefore(active,n);
+  }if(active)active.appendChild(n);}
+  document.querySelectorAll('.report-section').forEach(sec=>{
+   const h=sec.querySelector(':scope > h3');if(!h)return;
+   const content=document.createElement('div');content.className='section-content';
+   while(h.nextSibling)content.appendChild(h.nextSibling);
+   const btn=document.createElement('button');btn.type='button';btn.className='section-toggle';btn.setAttribute('aria-expanded','true');
+   btn.innerHTML=`<span>${h.textContent}</span><span class="arrow" aria-hidden="true">⌄</span>`;
+   h.replaceWith(btn);sec.appendChild(content);
+   btn.onclick=()=>{const open=btn.getAttribute('aria-expanded')!=='true';btn.setAttribute('aria-expanded',String(open));content.hidden=!open;};
+  });
+ }
+}
+
+function initializeLanding(){
+ const welcome=$('welcome'),start=$('welcomeStart');
+ start.addEventListener('click',()=>{
+  if(assemblyRunning)return;
+  $('units').value=$('welcomeUnits').value;
+  changeUnits();
+  $('hubView').value='dome';
+  welcome.classList.add('dismissed');
+  start.disabled=true;
+  const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const duration=reduced?0:2100;
+  assemblyRunning=true;assemblyProgress=0;
+  const status=$('assemblyStatus');status.hidden=false;
+  const t0=performance.now();
+  const tick=t=>{
+   const u=duration?Math.min(1,(t-t0)/duration):1;
+   assemblyProgress=u<1?1-Math.pow(1-u,2):1;
+   status.textContent=`ASSEMBLING DOME · ${Math.round(assemblyProgress*100)}%`;
+   render();
+   if(u<1)assemblyFrame=requestAnimationFrame(tick);
+   else{assemblyRunning=false;assemblyProgress=1;status.hidden=true;render();}
+  };
+  assemblyFrame=requestAnimationFrame(tick);
+ });
+}
+function collapseInitialSections(){
+ const buttons=document.querySelectorAll('aside .section-toggle,.report .section-toggle');
+ buttons.forEach((btn,index)=>{
+  const open=index===0;
+  btn.setAttribute('aria-expanded',String(open));
+  const content=btn.parentElement.querySelector(':scope > .section-content');
+  if(content)content.hidden=!open;
+ });
+}
+function setup(){
+ const canvas=$('view');canvasCtx=canvas.getContext('2d');let dragging=false,lastX=0,lastY=0;
+ canvas.addEventListener('pointerdown',e=>{dragging=true;lastX=e.clientX;lastY=e.clientY;canvas.dataset.dragDistance='0';canvas.setPointerCapture(e.pointerId)});
+ canvas.addEventListener('pointermove',e=>{if(!dragging)return;canvas.dataset.dragDistance=String(Number(canvas.dataset.dragDistance||0)+Math.hypot(e.clientX-lastX,e.clientY-lastY));viewYaw+=(e.clientX-lastX)*.008;viewPitch=Math.max(-1.45,Math.min(1.45,viewPitch+(e.clientY-lastY)*.008));lastX=e.clientX;lastY=e.clientY;render()});
+ canvas.addEventListener('pointerup',e=>{dragging=false;if(Number(canvas.dataset.dragDistance||0)>6||$('hubView').value==='detail')return;const rect=canvas.getBoundingClientRect(),x=e.clientX-rect.left,y=e.clientY-rect.top;if(linkPickMode){const hit=linkScreenPoints.map(v=>({...v,d:Math.hypot(v.x-x,v.y-y)})).sort((a,b)=>a.d-b.d)[0];if(hit&&hit.d<20)pickLinkPoint(hit.endpoint);return;}const closest=hubScreenPoints.map(v=>({...v,d:Math.hypot(v.x-x,v.y-y)})).sort((a,b)=>a.d-b.d)[0];if(closest&&closest.d<18)selectHubNode(closest.node);});canvas.addEventListener('pointercancel',()=>dragging=false);
+ canvas.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(.3,Math.min(5,zoom*Math.exp(-e.deltaY*.001)));render()},{passive:false});
+ window.addEventListener('resize',render);
+}
+// 3D socket preview: ring strips for tapered neck and collar, projected using
+// the same orbit camera as the rest of the dome. Holes are surface markers;
+// the preview is not a Boolean-drilled watertight mesh.
+function drawHubs(ctx,proj,scale,onlyNode=null){
+ const nodes=onlyNode?[onlyNode]:hubNodeList,hp=hubParameters(),N=12;
+ const faces=[],holes=[];
+ const add3=(a,b)=>a.map((v,i)=>v+b[i]);
+ const mul=(a,k)=>a.map(v=>v*k);
+ for(const node of nodes)for(const arm of node.arms){
+  const s=hubArmShape(arm,hp),axis=arm.dir;
+  const ref=Math.abs(axis[2])<.88?[0,0,1]:[0,1,0];
+  const u=norm(cross(axis,ref)),v=norm(cross(axis,u));
+  const world=(t,rad,theta)=>add3(add3(node.point,mul(axis,t)),add3(mul(u,rad*Math.cos(theta)),mul(v,rad*Math.sin(theta))));
+  const stations=[[s.t0,s.r0],[s.t1,s.r1],[s.t2,s.r1]];
+  for(let seg=0;seg<2;seg++){
+   if(stations[seg+1][0]-stations[seg][0]<.001)continue;
+   for(let j=0;j<N;j++){
+    const th=j*2*Math.PI/N,th2=(j+1)*2*Math.PI/N;
+    const [t0,r0]=stations[seg],[t1,r1]=stations[seg+1];
+    const verts=[world(t0,r0,th),world(t1,r1,th),world(t1,r1,th2),world(t0,r0,th2)].map(proj);
+    const shade=.60+.27*Math.max(0,Math.cos(th+.45))+.06*(seg===1);
+    const c=Math.round(175*shade),g=Math.round(193*shade),b=Math.round(210*shade);
+    faces.push({verts,depth:verts.reduce((a,x)=>a+x[2],0)/4,fill:`rgb(${c},${g},${b})`,kind:seg});
+   }
+  }
+  // Open socket rim, visible as annulus, with dark central bore.
+  const mouth=Array.from({length:N},(_,j)=>proj(world(s.t2,s.r1,2*Math.PI*j/N)));
+  const inner=Array.from({length:N},(_,j)=>proj(world(s.t2,s.innerMouth,2*Math.PI*j/N)));
+  faces.push({verts:mouth,inner,depth:mouth.reduce((a,p)=>a+p[2],0)/N-.002,fill:'#b6c6d6',kind:'rim'});
+  for(let hi=0;hi<hp.boltCount;hi++){
+   const t=s.t2-hp.boltFromTip-hi*hp.boltPitch;
+   if(t<=s.t0||t>=s.t2||hp.boltDia<=0)continue;
+   const radialAngle=hp.boltRotation*Math.PI/180;
+   const normal=add3(mul(u,Math.cos(radialAngle)),mul(v,Math.sin(radialAngle)));
+   const side=mul(normal,1),opposite=mul(normal,-1);
+   const tangent=norm(cross(axis,side));
+   const rad=t<=s.t1&&s.t1>s.t0?s.r0+(s.r1-s.r0)*(t-s.t0)/(s.t1-s.t0):s.r1;
+   for(const facing of [side,opposite]){
+    const base=add3(add3(node.point,mul(axis,t)),mul(facing,rad+.03));
+    const disk=[];
+    for(let j=0;j<16;j++){
+     let a=j*Math.PI*2/16;
+     disk.push(proj(add3(base,add3(mul(axis,Math.cos(a)*hp.boltDia*.5),mul(tangent,Math.sin(a)*hp.boltDia*.5)))));
+    }
+    holes.push({verts:disk,depth:disk.reduce((a,p)=>a+p[2],0)/disk.length});
+   }
+  }
+ }
+ // Painter ordering by depth (matching strut renderer).
+ faces.sort((a,b)=>b.depth-a.depth);
+ for(const f of faces){
+  ctx.beginPath();f.verts.forEach((p,j)=>j?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();
+  ctx.fillStyle=f.fill;ctx.fill();ctx.strokeStyle='rgba(18,29,41,.52)';ctx.lineWidth=.65;ctx.stroke();
+  if(f.inner){ctx.beginPath();f.inner.forEach((p,j)=>j?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle='#182330';ctx.fill();ctx.strokeStyle='#eef6fb';ctx.lineWidth=.65;ctx.stroke()}
+ }
+ // 2 surfaces per hole, for a through-bolt. Draw only the camera-facing surface.
+ const paired=[];for(let i=0;i<holes.length;i+=2){const a=holes[i],b=holes[i+1];paired.push(a.depth<b.depth?a:b)}
+ paired.sort((a,b)=>b.depth-a.depth);
+ for(const h of paired){ctx.beginPath();h.verts.forEach((p,j)=>j?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle='#0d1520';ctx.fill();ctx.strokeStyle='#f4f8fc';ctx.lineWidth=Math.max(.75,Math.min(1.7,scale*1.2));ctx.stroke();}
+}
+function drawCenterCylinder(ctx,proj,scale,node){
+ if(!node||!$('hubCenterOn').checked||$('ends').value!=='hub')return;
+ const axis=norm(node.point),rad=Math.max(0,val('hubCenterDia')/2),inner=Math.max(0,rad-val('hubCenterWall')),offset=val('hubCenterStart'),length=Math.max(0,val('hubCenterLength'));
+ if(rad<=0||length<=0)return;const N=28,ref=Math.abs(axis[2])<.9?[0,0,1]:[0,1,0],u=norm(cross(axis,ref)),v=norm(cross(axis,u));
+ const add=(a,b)=>a.map((x,i)=>x+b[i]),mul=(a,k)=>a.map(x=>x*k);
+ const ring=(t,r)=>Array.from({length:N},(_,i)=>{const a=2*Math.PI*i/N;return proj(add(add(node.point,mul(axis,t)),add(mul(u,r*Math.cos(a)),mul(v,r*Math.sin(a)))))});
+ const direction=$('hubCenterDirection').value==='inward'?-1:1;const a=ring(offset,rad),b=ring(offset+direction*length,rad);ctx.fillStyle='rgba(101,213,238,.65)';ctx.strokeStyle='#88eeff';ctx.lineWidth=1;
+ for(let i=0;i<N;i++){const j=(i+1)%N;ctx.beginPath();ctx.moveTo(...a[i].slice(0,2));ctx.lineTo(...b[i].slice(0,2));ctx.lineTo(...b[j].slice(0,2));ctx.lineTo(...a[j].slice(0,2));ctx.closePath();ctx.fill();ctx.stroke();}
+ ctx.beginPath();b.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle='#98dbeb';ctx.fill();ctx.stroke();
+ if($('hubCenterHole').checked&&inner>0){const bore=ring(offset+direction*(length+.01),inner);ctx.beginPath();bore.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle='#162533';ctx.fill();ctx.stroke();}
+}
+// Convex-polyhedron clipping: each neighbor at a hub supplies a bisector plane.
+// The shared plane separates the two solid beams without an artificial square setback.
+function timberMesh(edge){
+ const a=edge.cutA||edge.a,b=edge.cutB||edge.b,axis=norm(sub(b,a));if(!Number.isFinite(axis[0]))return [];
+ const ref=Math.abs(axis[2])<.91?[0,0,1]:[0,1,0],u=norm(cross(axis,ref)),v=norm(cross(axis,u)),hw=val('od')/2,hh=val('wall')/2;
+ const pts=[];for(const end of [a,b])for(const [i,j] of [[-1,-1],[1,-1],[1,1],[-1,1]])pts.push(end.map((x,k)=>x+u[k]*i*hw+v[k]*j*hh));
+ let polys=[[pts[0],pts[3],pts[2],pts[1]],[pts[4],pts[5],pts[6],pts[7]],[pts[0],pts[1],pts[5],pts[4]],[pts[1],pts[2],pts[6],pts[5]],[pts[2],pts[3],pts[7],pts[6]],[pts[3],pts[0],pts[4],pts[7]]];
+ if($('woodTrim').checked){
+   for(const [hub,other] of [[edge.a,edge.b],[edge.b,edge.a]]){
+    const dir=norm(sub(other,hub));const peers=edges.filter(e=>e!==edge&&(keyPoint(e.a)===keyPoint(hub)||keyPoint(e.b)===keyPoint(hub)));
+    for(const peer of peers){const opp=keyPoint(peer.a)===keyPoint(hub)?peer.b:peer.a;const d2=norm(sub(opp,hub));const n=sub(dir,d2),normN=mag(n);if(normN<1e-7)continue;
+     const gap=Math.max(0,val('jointGap'));const level=dot(n,hub)+gap*normN/2;
+     const intersections=[],next=[];
+     for(const poly of polys){const out=[];for(let i=0;i<poly.length;i++){
+       const p=poly[i],q=poly[(i+1)%poly.length],dp=dot(n,p)-level,dq=dot(n,q)-level;
+       if(dp>=-1e-7)out.push(p);
+       if((dp>1e-7&&dq< -1e-7)||(dp< -1e-7&&dq>1e-7)){
+        const t=dp/(dp-dq),hit=p.map((x,k)=>x+t*(q[k]-x));out.push(hit);intersections.push(hit);
+       }
+      }if(out.length>=3)next.push(out);
+     }
+     const unique=[];for(const pt of intersections)if(!unique.some(q=>mag(sub(q,pt))<1e-5))unique.push(pt);
+     if(unique.length>=3){const center=[0,1,2].map(i=>unique.reduce((sum,p)=>sum+p[i],0)/unique.length);const nHat=norm(n),axisU=norm(cross(nHat,Math.abs(nHat[2])<.9?[0,0,1]:[0,1,0])),axisV=norm(cross(nHat,axisU));unique.sort((x,y)=>Math.atan2(dot(sub(x,center),axisV),dot(sub(x,center),axisU))-Math.atan2(dot(sub(y,center),axisV),dot(sub(y,center),axisU)));next.push(unique);}
+     polys=next;if(!polys.length)break;
+    }
+   }
+ }
+ return polys;
+}
+function drawLumberPrism(ctx,proj,e,fill,scale){
+ const polys=timberMesh(e),shaded=polys.map((poly,i)=>({points:poly.map(proj),depth:poly.reduce((v,p)=>v+proj(p)[2],0)/poly.length,index:i})).sort((a,b)=>b.depth-a.depth);
+ for(const face of shaded){ctx.beginPath();face.points.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle=fill;ctx.globalAlpha=.60+(.27*(face.index%3)/2);ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle='#142333';ctx.lineWidth=.8;ctx.stroke();}
+}
+function sideDrawingSvg(length,width,depth,group,qty){
+ const x=30,y=39,X=420,Y=84;
+ const dim=`${asUnit(length)} ${uName[$('units').value]}`;
+ return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 465 175" role="img" aria-label="Side elevation strut ${group}">
+ <rect x="${x}" y="${y}" width="${X-x}" height="${Y-y}" fill="#9cbbd6" stroke="#162737" stroke-width="2"/>
+ <path d="M${x} 30V104 M${X} 30V104 M${x} 112H${X} M${x} 108v8 M${X} 108v8" stroke="#daebfa" stroke-width="1.1"/>
+ <text x="225" y="128" font-size="15" text-anchor="middle" fill="#ecf6ff">${dim}</text>
+ <path d="M${x-10} ${y}h-12 M${x-10} ${Y}h-12 M11 ${y}V${Y}" stroke="#daebfa" fill="none"/>
+ <text x="7" y="63" font-size="11" text-anchor="middle" fill="#ecf6ff" transform="rotate(-90 7 63)">${asUnit(depth)} ${uName[$('units').value]}</text>
+ <text x="225" y="152" font-size="12" text-anchor="middle" fill="#a9c4d6">Front / side view · cross-section ${asUnit(width)} × ${asUnit(depth)} ${uName[$('units').value]} · Qty ${qty}</text></svg>`;
+}
+function refreshMemberDrawings(){
+ const wrap=$('memberDrawings');if(!wrap)return;
+ wrap.innerHTML=groups.map((g,i)=>`<div class="memberDrawing"><div class="group-chip"><i class="group-dot" style="background:${palette[i%palette.length]}"></i>${groupName(i)} · Qty ${g.members.length}</div>${sideDrawingSvg(g.mean,val('od'),val('wall'),groupName(i),g.members.length)}<small>${g.mean.toFixed(1)} mm / ${(g.mean/25.4).toFixed(3)} in · Stock ${$('size').selectedOptions[0]?.textContent||''}</small></div>`).join('');
+}
+function memberDrawingDocument(){
+ const drawings=groups.map((g,i)=>`<article><h2>Type ${groupName(i)} — ${g.members.length} pieces</h2>${sideDrawingSvg(g.mean,val('od'),val('wall'),groupName(i),g.members.length)}<p>Cut length ${g.mean.toFixed(2)} mm (${(g.mean/25.4).toFixed(3)} in); section ${val('od').toFixed(2)} × ${val('wall').toFixed(2)} mm. Group tolerance / standardization is per project settings.</p></article>`).join('');
+ return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Geodesic dome — member drawings</title><style>body{font:14px Arial,sans-serif;color:#152536;margin:24px}article{border-bottom:2px solid #bbb;padding:15px 0;break-inside:avoid}svg{width:100%;max-width:670px;background:#23364a;border-radius:8px}h2{margin-bottom:8px}button{padding:9px;margin-bottom:15px}@media print{button{display:none}article{page-break-inside:avoid}}</style></head><body><button onclick="print()">Print / Save PDF</button><h1>Geodesic Dome — Dimensioned Member Side Views</h1><p>${edges.length} members · ${groups.length} cut families · ${$('size').selectedOptions[0]?.textContent||''}</p><p><b>Important:</b> side views show centerline lengths only. The viewport illustrates joint-cut planes, but true cut-face dimensions and manufacturing toolpaths are not computed. Check physical fit before cutting.</p>${drawings}</body></html>`;
+}
+// Timber connection inspector: labels are real centerline lengths and genuine 3D
+// included angles. Projected screen arcs are guides, not compound-saw settings.
+function drawTimberHubAnnotations(ctx,proj,node,w,h){
+ const O=proj(node.point),arms=node.arms.map((a,i)=>{
+  const dir=a.dir,edge=edges[a.edge_index];
+  const reach=Math.max(val('od'),val('wall'))*2.4;
+  const P=proj(node.point.map((x,k)=>x+dir[k]*reach));
+  return {index:i,arm:a,edge,p:P,dir,theta:Math.atan2(P[1]-O[1],P[0]-O[0])};
+ }).sort((a,b)=>a.theta-b.theta);
+ ctx.save();ctx.lineWidth=1.4;ctx.font='12px Segoe UI,Arial,sans-serif';
+ for(let i=0;i<arms.length;i++){
+  const a=arms[i],b=arms[(i+1)%arms.length];
+  const angle=angleBetween(a.dir,b.dir),start=a.theta,end=b.theta;
+  const angular=(((end-start)%(Math.PI*2))+(Math.PI*2))%(Math.PI*2);
+  if(angular>.03&&angular<Math.PI*1.7){
+   const r=30+i%2*9;ctx.beginPath();ctx.arc(O[0],O[1],r,start,start+angular);ctx.strokeStyle='rgba(255,208,108,.85)';ctx.stroke();
+   const mid=start+angular/2,tx=O[0]+Math.cos(mid)*(r+15),ty=O[1]+Math.sin(mid)*(r+15);
+   if(tx>65&&tx<w-65&&ty>80&&ty<h-40){drawAnnotationLabel(ctx,angle.toFixed(1)+'°',tx,ty,'#ffdb89');}
+  }
+ }
+ for(const a of arms){
+  const distance=Math.min(w,h)*.29,dx=Math.cos(a.theta),dy=Math.sin(a.theta);
+  const x=O[0]+dx*distance,y=O[1]+dy*distance;
+  if(x<74||x>w-74||y<85||y>h-42)continue;
+  const label='S'+String(a.arm.edge_index+1).padStart(3,'0')+'  '+(a.edge?asUnit(a.edge.length):'—')+' '+uName[$('units').value];
+  drawAnnotationLabel(ctx,label,x,y,'#c2f1ff');
+ }
+ ctx.beginPath();ctx.arc(O[0],O[1],5,0,Math.PI*2);ctx.fillStyle='#ffcb58';ctx.fill();
+ drawAnnotationLabel(ctx,'H'+String(node.number).padStart(3,'0'),O[0]+41,O[1]-19,'#ffffff');
+ const label=`TIMBER JOINT • ${arms.length} MEMBERS  |  SECTION ${asUnit(val('od'))} × ${asUnit(val('wall'))} ${uName[$('units').value]}`;
+ drawAnnotationLabel(ctx,label,w/2,Math.max(68,h-35),'#ebf5fb');
+ ctx.restore();
+}
+function drawAnnotationLabel(ctx,text,x,y,color){
+ ctx.save();ctx.font='bold 12px Segoe UI,Arial,sans-serif';const width=ctx.measureText(text).width+14;
+ ctx.fillStyle='rgba(8,21,34,.86)';ctx.fillRect(x-width/2,y-14,width,21);
+ ctx.strokeStyle='rgba(131,171,204,.54)';ctx.lineWidth=.8;ctx.strokeRect(x-width/2,y-14,width,21);
+ ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=color;ctx.fillText(text,x,y-3);ctx.restore();
+}
+function render(){
+ syncAutomaticTabs();
+ if(!canvasCtx)return;const canvas=$('view'),w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;
+ const dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);
+ const ctx=canvasCtx;ctx.setTransform(dpr,0,0,dpr,0,0);
+ const bg=ctx.createLinearGradient(0,0,w,h);bg.addColorStop(0,'#1d3047');bg.addColorStop(1,'#091320');ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
+ const dia=Math.max(1,val('dia'));const cutoff=(1-2*val('cut'))*dia/2;
+ const hubbed=$('ends').value==='hub',timber=$('fam').value==='wood',tabbedMode=$('ends').value==='crimp',detail=(hubbed||timber||tabbedMode)&&$('hubView').value==='detail',focus=detail?selectedHub():null;
+ const hp=hubParameters(),focusReach=focus?Math.max(...focus.arms.map(a=>hubArmShape(a,hp).t2)):0;
+ const centerZ=detail?focus.point[2]:(cutoff<0?(dia/2+cutoff)/2:dia/4);
+ const detailSpan=timber?Math.max(160,val('od')*8,val('wall')*8):tabbedMode?Math.max(100,val('tabLength')*5,val('od')*10):Math.max(35,focusReach*2.8);const scale=Math.min(w*.85,h*.83)/(detail?detailSpan:dia)*zoom;const sy=Math.sin(viewYaw),cy=Math.cos(viewYaw),sp=Math.sin(viewPitch),cp=Math.cos(viewPitch);
+ const proj=p=>{let x=p[0]-(detail?focus.point[0]:0),y=p[1]-(detail?focus.point[1]:0),z=p[2]-centerZ;const xx=cy*x-sy*y, yy=sy*x+cy*y;const yy2=cp*yy-sp*z,zz=sp*yy+cp*z;return [w/2+xx*scale,h/2-zz*scale,yy2]};
+ const lineWidth=Math.max(1.4,Math.min(28,val('od')*scale*.85));
+ const drawableOriginal=(detail?(focus&&(timber||tabbedMode)?(tabbedMode?focus.arms.filter(arm=>{const edge=edges[arm.edge_index];return edge&&($('tabSides').value==='both'||($('tabSides').value==='a'&&keyPoint(edge.a)===keyPoint(focus.point))||($('tabSides').value==='b'&&keyPoint(edge.b)===keyPoint(focus.point)));}).map(arm=>{const source=edges[arm.edge_index],reach=Math.min((source.centerlineLength||source.length)/2,Math.max(val('tabLength')*2.8,val('od')*5));const tip=focus.point.map((v,k)=>v+arm.dir[k]*reach);return {...source,a:focus.point,b:tip,cutA:focus.point,cutB:tip};}):edges.filter(e=>keyPoint(e.a)===keyPoint(focus.point)||keyPoint(e.b)===keyPoint(focus.point))):[]):assemblyRunning?edges.slice(0,Math.max(0,Math.ceil(edges.length*assemblyProgress))):edges);
+ const drawable=drawableOriginal.map((e,idx)=>{const a=proj(e.cutA||e.a),b=proj(e.cutB||e.b);return {a,b,depth:(a[2]+b[2])/2,group:e.group,base:e.base,additional:e.additional,idx}}).sort((a,b)=>b.depth-a.depth);
+ const tabbed=$('ends').value==='crimp',tabLen=val('tabLength'),tabWidth=computedTab(),holeOffset=val('boltOffset'),holeDia=val('boltDia'),sides=$('tabSides').value;
+ // The struts are projected in 2D. Each cap uses the requested circular radius,
+ // with an arc sagitta computed from the selected tab width (no semicircle assumption).
+ for(const e of drawable){
+  const [ax,ay]=e.a,[bx,by]=e.b;const dx=bx-ax,dy=by-ay,len=Math.hypot(dx,dy);if(len<.0001)continue;
+  const ux=dx/len,uy=dy/len,nx=-uy,ny=ux;
+  const drawLine=(x1,y1,x2,y2,color,width)=>{ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.stroke()};
+  if(timber){const edge=drawableOriginal[e.idx];drawLumberPrism(ctx,proj,edge,e.additional?'#ffcb58':palette[e.group%palette.length],scale);continue;}
+  drawLine(ax,ay,bx,by,'#081523',lineWidth+2.2);
+  drawLine(ax,ay,bx,by,e.additional?'#ffcb58':palette[e.group%palette.length],lineWidth);
+  drawLine(ax-lineWidth*.15,ay-lineWidth*.2,bx-lineWidth*.15,by-lineWidth*.2,'rgba(255,255,255,.27)',Math.max(.5,lineWidth*.19));
+  if(hubbed)continue;if(!tabbed)continue;
+  const tw=Math.max(1.2,tabWidth*scale),rad=Math.max(tw/2,val('endRadius')*scale),hl=Math.max(0,holeOffset*scale),tl=Math.min(tabLen*scale,len*.42);
+  if(tl<=.5)continue;
+  for(const atStart of [true,false]){
+   if(sides==='a'&&!atStart||sides==='b'&&atStart)continue;
+   const ix=atStart?ux:-ux,iy=atStart?uy:-uy;
+   // Every tab meeting at a hub references the SAME bolt center (the hub vertex).
+   // The tab's clipped tip extends past that bolt center by holeOffset; its hole
+   // center is therefore at the hub, not independently offset along each strut.
+   const hx0=atStart?ax:bx,hy0=atStart?ay:by;
+   const px=hx0-ix*hl,py=hy0-iy*hl;
+   const cx=px+ix*tl,cy=py+iy*tl;
+   const sag=rad-Math.sqrt(Math.max(0,rad*rad-tw*tw/4));
+   // Polygon, with circularly curved end cap approximated by sampled arc.
+   ctx.beginPath();ctx.moveTo(cx+nx*tw/2,cy+ny*tw/2);
+   ctx.lineTo(px+nx*tw/2+ix*sag,py+ny*tw/2+iy*sag);
+   for(let j=1;j<=12;j++){
+    const yy=tw/2-j*tw/12;
+    const advance=rad-Math.sqrt(Math.max(0,rad*rad-yy*yy));
+    ctx.lineTo(px+nx*yy+ix*advance,py+ny*yy+iy*advance);
+   }
+   ctx.lineTo(cx-nx*tw/2,cy-ny*tw/2);ctx.closePath();
+   ctx.fillStyle=palette[e.group%palette.length];ctx.fill();ctx.strokeStyle='#081523';ctx.lineWidth=1.5;ctx.stroke();
+   // Through-hole is drawn as a dark circle at its axial location, with white rim.
+   if(hl<tl && holeDia>0){const hx=hx0,hy=hy0;
+    ctx.beginPath();ctx.arc(hx,hy,Math.max(1,holeDia*scale/2),0,2*Math.PI);ctx.fillStyle='#081523';ctx.fill();ctx.strokeStyle='rgba(255,255,255,.75)';ctx.lineWidth=Math.max(.8,scale*.8);ctx.stroke();}
+  }
+ }
+ if(hubbed){drawHubs(ctx,proj,scale,focus);if(detail)drawCenterCylinder(ctx,proj,scale,focus);}
+ if(detail&&focus&&dimensionalOverlayEnabled)drawTimberHubAnnotations(ctx,proj,focus,w,h);
+ if(!detail&&$('doorEnabled').checked){const d=doorDefinition(),cs=doorCorners(d).map(proj),rr=Math.max(2,d.thickness*scale);ctx.save();ctx.strokeStyle='#f6a85d';ctx.lineWidth=rr;ctx.lineJoin='miter';ctx.beginPath();ctx.moveTo(cs[0][0],cs[0][1]);for(let j=1;j<4;j++)ctx.lineTo(cs[j][0],cs[j][1]);ctx.stroke();ctx.strokeStyle='#ffe0ad';ctx.lineWidth=1.5;ctx.stroke();ctx.restore();}
+ linkScreenPoints=detail?[]:linkEndpoints.map(endpoint=>{const p=proj(endpoint.point);return {endpoint,x:p[0],y:p[1],depth:p[2]};});
+ hubScreenPoints=detail?[]:hubNodeList.map(node=>{const p=proj(node.point);return {node,x:p[0],y:p[1],depth:p[2]};});
+ if(!detail){for(const pt of hubScreenPoints){ctx.beginPath();ctx.arc(pt.x,pt.y,Math.max(2.5,Math.min(5,scale*9)),0,2*Math.PI);ctx.fillStyle='rgba(240,250,255,.8)';ctx.fill();}}
+ if(!detail){
+  for(const p of linkScreenPoints){if(!p.endpoint.id.startsWith('door:')&&!linkPickMode&&p.endpoint.id!==linkPickStart)continue;
+   ctx.beginPath();ctx.arc(p.x,p.y,linkPickMode?7:5,0,Math.PI*2);ctx.fillStyle=p.endpoint.id.startsWith('door:')?'#ffb24e':'#7af3df';ctx.fill();ctx.strokeStyle='#091420';ctx.lineWidth=1.4;ctx.stroke();}
+  const selected=linkScreenPoints.find(p=>p.endpoint.id===linkPickStart);
+  if(selected){ctx.beginPath();ctx.arc(selected.x,selected.y,12,0,Math.PI*2);ctx.strokeStyle='#f7ee88';ctx.lineWidth=2;ctx.stroke();}
+ }
+ $('backToDomeFloat').classList.toggle('visible',detail);$('overlayToggle').classList.toggle('visible',detail);
+ showHubInfo(focus||selectedHub());
+ $('info').textContent=detail&&focus?(timber?`Timber joint H${String(focus.number).padStart(3,'0')} · ${focus.arms.length} connected members · angular + dimensional overlay · drag to orbit`:tabbedMode?`Flattened-tab joint H${String(focus.number).padStart(3,'0')} · ${focus.arms.length} connected members · tab / bolt dimensions are schematic · drag to orbit`:`Connector H${String(focus.number).padStart(3,'0')} · ${focus.arms.length} socket arms · ${focus.arms.length*hp.boltCount} through-holes (preview) · drag to orbit`):`${val('freq')}V · ${edges.length} members (${edges.filter(e=>e.additional).length} added) · ${groups.length} cut families · ${asUnit(val('dia'))} ${uName[$('units').value]} diameter · drag to orbit · scroll to zoom`;
+}
+function refreshMaterial(){$('woodOptions').style.display=$('fam').value==='wood'?'block':'none';const c=C[$('fam').value];$('size').innerHTML=c.items.map((x,i)=>`<option value="${i}">${x[0]}</option>`).join('');$('density').value=c.density;setDim('stock',c.stock);applySize()}
+function applySize(){const it=C[$('fam').value].items[Number($('size').value)||0];setDim('od',it[1]);setDim('wall',it[2]);syncAutomaticTabs();build()}
+function download(name,body,type='text/plain'){const url=URL.createObjectURL(new Blob([body],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000)}
+function project(){return {schema:'GeodesicDomeStudio-v1.5',door:{...doorDefinition(),n:undefined,t:undefined,center:undefined,frame_corners_mm:doorCorners(doorDefinition()),intersecting_members:doorIntersections,removed_member_count:doorRemoved.length,frame_preview_only:true,warning:'Door opening removes whole struts, not partial cut sections; additional reinforcement is not generated.'},geometry:{base_style:$('baseStyle').value,lower_band_height_mm:val('baseRise'),length_mode:$('lengthMode').value,max_cut_length_deviation_mm:val('lengthDeviation'),original_cut_families:originalVariantCount,maximum_actual_length_change_mm:maxLengthAdjustment,negative_end_setback_count:invalidCorrectionCount,frequency:val('freq'),diameter_mm:val('dia'),dome_fraction:val('cut'),cutoff_ratio:1-2*val('cut'),rotation_deg:val('rot'),length_tolerance_mm:val('tol')},material:geometry(),end_style:$('ends').value,end_allowance_mm:val('allow'),joint_clearance_mm:val('jointGap'),end_setback_method:'conservative_circular_tube_pairwise_angles',tab_parameters:{length_mm:val('tabLength'),width_mm:computedTab(),end_radius_mm:val('endRadius'),width_rule:'outside_diameter_mm * PI / 2',tab_center_from_end_mm:val('tabCenter'),bolt_hole_diameter_mm:val('boltDia'),bolt_hole_center_from_end_mm:val('boltOffset'),target_thickness_mm:val('tabThickness'),sides:$('tabSides').value,solid_geometry_generated:false,preview_tabs_schematic:true,bolt_alignment:'all_adjoining_tab_holes_concentric_at_hub_vertex',common_bolt_center_rule:'3d_hub_point',physical_stack_offsets_generated:false},hub_parameters:{center_cylinder:{enabled:$('hubCenterOn').checked,diameter_mm:val('hubCenterDia'),wall_thickness_mm:val('hubCenterWall'),projection_length_mm:val('hubCenterLength'),start_offset_mm:val('hubCenterStart'),axial_hole:$('hubCenterHole').checked,projection_direction:$('hubCenterDirection').value,projection_sign:$('hubCenterDirection').value==='inward'?-1:1,end_offset_mm:val('hubCenterStart')+($('hubCenterDirection').value==='inward'?-1:1)*val('hubCenterLength'),axis_rule:'signed_outward_radial_node_normal',preview_only:true},start_mm:val('hubStart'),contact_length_mm:val('hubContact'),wall_thickness_mm:val('hubThick'),taper_angle_deg:Number($('hubTaper').value),boolean_clearance_mm:val('hubOffset'),placement:$('hubPlacement').value,collar_length_mm:val('hubCollar'),through_bolt_diameter_mm:val('hubBoltDia'),bolt_center_from_socket_tip_mm:val('hubBoltFromTip'),bolt_rotation_degrees:Number($('hubBoltRotation').value),holes_per_socket:Number($('hubBoltCount').value),second_hole_spacing_mm:val('hubBoltPitch'),subtract_strut_volumes:$('hubBoolean').checked,solid_geometry_generated:false,bolt_holes_drilled_in_mesh:false,preview_schematic:true},connectors:hubNodeList.map(n=>({id:`H${String(n.number).padStart(3,'0')}`,position_mm:n.point,arm_count:n.arms.length,arms:n.arms.map(a=>({member_id:`STRUT-${String(a.edge_index+1).padStart(4,'0')}`,direction:a.dir,cut_setback_mm:a.trim,socket_tip_from_hub_mm:hubArmShape(a).t2}))})),members:edges.map((e,i)=>({id:`STRUT-${String(i+1).padStart(4,'0')}`,a:e.cutA||e.a,b:e.cutB||e.b,hub_a:e.a,hub_b:e.b,trim_start_mm:e.trimA||0,trim_end_mm:e.trimB||0,untrimmed_length_mm:e.centerlineLength||e.length,as_designed_cut_length_mm:e.designLength,length_adjustment_mm:e.length_delta_mm||0,length_mm:e.length,group:e.group,base:!!e.base,additional:!!e.additional,additional_id:e.additionalId||null})),additional_struts:supplementalLinks.map(l=>({...l})),groups:groups.map((g,i)=>({id:`TYPE-${i+1}`,quantity:g.members.length,length_mm:g.mean})),stock_plan:{stock_length_mm:val('stock'),saw_kerf_mm:val('kerf'),stock_end_trim_mm:val('trim'),stock_piece_count:stockPlan.bins.length,overlength_count:stockPlan.oversize,cut_patterns:stockPlan.bins.map(b=>b.cuts)},hub_angles:hubSummary,hub_types:hubTypes,interpanel_fold_angles:foldSummary,facet_interior_angles:facetSummary,warning:'Structural suitability not established; exact retail properties must be verified.'}}
+$('hubCsv').onclick=()=>{
+ const hp=hubParameters();const lines=['Hub_ID,Hub_X_mm,Hub_Y_mm,Hub_Z_mm,Arm_Count,Arm_Index,Strut_ID,Axis_X,Axis_Y,Axis_Z,Strut_Setback_mm,Socket_Tip_From_Hub_mm,Socket_OD_At_Tip_mm,Bolt_Hole_Diameter_mm,Bolt_Hole_Offset_From_Tip_mm,Bolt_Hole_Rotation_deg'];
+ hubNodeList.forEach(n=>n.arms.forEach((a,j)=>{
+  const shape=hubArmShape(a,hp);for(let h=0;h<hp.boltCount;h++)lines.push([`H${String(n.number).padStart(3,'0')}`,...n.point.map(x=>x.toFixed(3)),n.arms.length,j+1,`S${String(a.edge_index+1).padStart(3,'0')}`,...a.dir.map(x=>x.toFixed(6)),a.trim.toFixed(3),shape.t2.toFixed(3),(shape.r1*2).toFixed(3),hp.boltDia.toFixed(3),(hp.boltFromTip+h*hp.boltPitch).toFixed(3),hp.boltRotation.toFixed(2)].join(','));
+ }));
+ download('dome_connector_schedule.csv',lines.join('\r\n'),'text/csv');
+};
+$('json').onclick=()=>download('dome_project.json',JSON.stringify(project(),null,2),'application/json');
+$('csv').onclick=()=>{let lines=['Group,Quantity,Standard_Cut_Length_mm,Standard_Cut_Length_in,Material,Outside_or_Width_mm,Wall_or_Depth_mm,Length_with_end_allowance_mm,Group_Stock_Pieces,Maximum_Adjustment_mm'];const p=project(),m=p.material;for(let i=0;i<groups.length;i++){let g=groups[i];lines.push([`TYPE-${i+1}`,g.members.length,g.mean.toFixed(3),(g.mean/25.4).toFixed(4),m.family,m.od,m.wall,(g.mean+2*val('allow')).toFixed(3),nestStock(g.members.map(e=>e.length+2*val('allow')),val('stock'),val('kerf'),val('trim')).bins.length,Math.max(...g.members.map(e=>Math.abs(e.length_delta_mm||0))).toFixed(3)].join(','))}download('dome_cut_list.csv',lines.join('\r\n'),'text/csv')};
+// Lightweight tessellated cylinder export: NOT B-rep or engineering CAD solids.
+function triangles(){let out=[],rad=geometry().od/2,N=10;for(let e of edges){let a=e.cutA||e.a,b=e.cutB||e.b,d=norm(sub(b,a)),helper=Math.abs(d[2])<.9?[0,0,1]:[0,1,0],u=norm([d[1]*helper[2]-d[2]*helper[1],d[2]*helper[0]-d[0]*helper[2],d[0]*helper[1]-d[1]*helper[0]]),v=[d[1]*u[2]-d[2]*u[1],d[2]*u[0]-d[0]*u[2],d[0]*u[1]-d[1]*u[0]];let circ=(center,i)=>center.map((x,j)=>x+rad*(u[j]*Math.cos(i*Math.PI*2/N)+v[j]*Math.sin(i*Math.PI*2/N)));for(let i=0;i<N;i++){let p=circ(a,i),q=circ(a,i+1),r=circ(b,i),s=circ(b,i+1);out.push([p,r,q],[q,r,s],[a,q,p],[b,r,s])}}return out}
+$('anglesCsv').onclick=()=>{let lines=['Section,Angles_degrees,Count'];for(const h of hubSummary)lines.push(`Hub,${h.angle.toFixed(1)},${h.count}`);for(const f of foldSummary)lines.push(`Panel fold,${f.angle.toFixed(1)},${f.count}`);for(const t of hubTypes)lines.push(`Hub type,${t.degree} struts,${t.count}`);for(const f of facetSummary)lines.push(`Facet,"${f.angles}",${f.count}`);download('dome_joint_angles.csv',lines.join('\r\n'),'text/csv')};
+$('obj').onclick=()=>{const tr=triangles();let lines=['# Dome preview mesh; mm','o GeodesicDomePreview'];let id=1;for(const tri of tr){for(const pt of tri)lines.push(`v ${pt.map(v=>v.toFixed(5)).join(' ')}`);lines.push(`f ${id} ${id+1} ${id+2}`);id+=3}download('dome_preview.obj',lines.join('\n'))};
+$('stl').onclick=()=>{let lines=['solid dome_preview'];for(const tri of triangles()){lines.push('facet normal 0 0 0','outer loop',...tri.map(pt=>'vertex '+pt.join(' ')),'endloop','endfacet')}lines.push('endsolid dome_preview');download('dome_preview.stl',lines.join('\n'))};
+
+// Fabrication plan export. Polar plan is a true XY projection, not a flattened developable surface.
+function fabricationHtml(){
+ const pr=project(), stock=val('stock'),kerf=val('kerf'),trim=val('trim'),allow=val('allow');
+ const usable=stock-2*trim;
+ const arr=edges.map((e,i)=>({id:'S'+String(i+1).padStart(3,'0'),g:groupName(e.group),length:e.length+2*allow,e})).sort((a,b)=>b.length-a.length);
+ const bins=[],overs=[];
+ for(const piece of arr){if(piece.length+kerf>usable+1e-6){overs.push(piece);continue}let bin=bins.find(x=>x.used+piece.length+kerf<=usable+1e-6);if(!bin){bin={used:0,pieces:[]};bins.push(bin)}bin.pieces.push(piece);bin.used+=piece.length+kerf;}
+ let cuts=bins.map((b,i)=>{let cursor=0;const x0=135,W=720;let pieces=b.pieces.map(q=>{let w=Math.max(1,q.length/stock*W),x=x0+cursor/stock*W;cursor+=q.length+kerf;return `<rect x="${x.toFixed(2)}" y="28" width="${w.toFixed(2)}" height="25" fill="${palette[q.e.group%palette.length]}" stroke="#fff" stroke-width=".5"><title>${q.id}: ${q.g} ${q.length.toFixed(1)} mm</title></rect><text x="${(x+w/2).toFixed(2)}" y="45" text-anchor="middle" fill="#111" font-size="10">${q.g}</text>`}).join('');return `<div class="bar"><svg viewBox="0 0 870 66" xmlns="http://www.w3.org/2000/svg"><text x="5" y="43" font-size="13">Stock ${i+1}</text><rect x="135" y="28" width="720" height="25" fill="#eee" stroke="#555"/>${pieces}<text x="135" y="14" font-size="11">${b.pieces.map(q=>q.id+' '+q.g+' '+q.length.toFixed(1)+'mm').join(' | ')}</text></svg></div>`}).join('');
+ const R=350,cx=410,cy=405,maxr=Math.max(1,val('dia')/2),sectorCount=12;
+ const xy=p=>[cx+p[0]/maxr*R,cy-p[1]/maxr*R];
+ let radial='';for(let k=0;k<sectorCount;k++){let a=2*Math.PI*k/sectorCount;radial+=`<line x1="${cx}" y1="${cy}" x2="${cx+R*Math.cos(a)}" y2="${cy-R*Math.sin(a)}" stroke="#aeb8c6" stroke-dasharray="5 6"/><text x="${cx+(R+23)*Math.cos(a+Math.PI/sectorCount)}" y="${cy-(R+23)*Math.sin(a+Math.PI/sectorCount)}" font-size="12" text-anchor="middle">${k+1}</text>`;}
+ let ring='';for(let i=1;i<=4;i++)ring+=`<circle cx="${cx}" cy="${cy}" r="${R*i/4}" fill="none" stroke="#cdd4df" stroke-dasharray="4 5"/>`;
+ let lines=edges.map((e,i)=>{const [x1,y1]=xy(e.a),[x2,y2]=xy(e.b),[mx,my]=[(x1+x2)/2,(y1+y2)/2];return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${e.additional?'#ff9b28':palette[e.group%palette.length]}" stroke-width="${e.additional?4:2.4}"><title>${e.additional?(e.additionalId+' / '):''}${'S'+String(i+1).padStart(3,'0')} / ${groupName(e.group)} / ${e.length.toFixed(2)} mm</title></line>`}).join('');
+ const planDoor=$('doorEnabled').checked?(()=>{const d=doorDefinition(),pts=doorCorners(d);const a=xy(pts[0]),b=xy(pts[1]);return `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#ea8d28" stroke-width="7"><title>Doorway: ${d.width.toFixed(1)} mm width, ${d.height.toFixed(1)} mm height, angle ${d.angle_deg} degrees</title></line>`;})():'';
+ let labels=edges.length<=230?edges.map((e,i)=>{const [x1,y1]=xy(e.a),[x2,y2]=xy(e.b);return `<text x="${(x1+x2)/2}" y="${(y1+y2)/2}" text-anchor="middle" font-size="8" fill="#122333" paint-order="stroke" stroke="white" stroke-width="2">${groupName(e.group)}</text>`}).join(''):'';
+ const legend=groups.map((g,i)=>`<span style="margin-right:12px;white-space:nowrap"><b style="color:${palette[i%palette.length]}">■ ${groupName(i)}</b> ${g.members.length} × ${g.mean.toFixed(1)} mm</span>`).join('');
+ const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ let tags=arr.map(q=>`<div class="tag"><strong>${q.id} · ${q.g}</strong><br>${q.length.toFixed(1)} mm / ${(q.length/25.4).toFixed(3)} in</div>`).join('');
+ const hubReport=pr.end_style==='hub'?`<h2>Multi-socket hub connectors</h2><p>${hubNodeList.length} hubs; ${hubNodeList.reduce((a,n)=>a+n.arms.length,0)} socket arms. Connector arm counts: ${hubTypes.map(x=>x.degree+'-way × '+x.count).join('; ')}. Tube-to-tube clearance ${val('jointGap').toFixed(2)} mm.</p><p>Sleeve start ${val('hubStart')} mm; engagement ${val('hubContact')} mm; collar ${val('hubCollar')} mm; wall ${val('hubThick')} mm; taper ${$('hubTaper').value}°; placement ${$('hubPlacement').value}; bolt Ø ${val('hubBoltDia')} mm; setback from socket tip ${val('hubBoltFromTip')} mm; hole rotation ${$('hubBoltRotation').value}°; ${$('hubBoltCount').value} hole(s)/arm; pitch ${val('hubBoltPitch')} mm. No drilled hub solids included in this prototype.</p>`:'';
+ const end=pr.end_style==='crimp'?`<p>Tabbed ends: tab ${val('tabLength')} mm, calculated width ${computedTab().toFixed(2)} mm, user-defined end-cut radius ${val('endRadius').toFixed(2)} mm, tab center ${val('tabCenter')} mm from end, bolt Ø ${val('boltDia')} mm, hole center ${val('boltOffset')} mm from end, thickness ${val('tabThickness')} mm, ends ${esc($('tabSides').value)}. Geometry is specification only, not formed CAD.</p>`:'';
+ return `<!doctype html><html><head><meta charset="utf-8"><title>Dome fabrication report</title><style>body{font:12px Arial,sans-serif;color:#172434;margin:20px}h1{font-size:24px}h2{font-size:17px;margin-top:24px;border-bottom:1px solid #ccd}.bar{break-inside:avoid;margin:5px 0}.bar svg{width:100%;max-width:1100px}.tag{display:inline-block;width:142px;border:1px dashed #888;padding:8px;margin:4px;break-inside:avoid}.map{width:100%;max-width:800px;display:block;margin:auto} .page{break-before:page}@media print{@page{size:A3 landscape;margin:12mm}button{display:none}.tag{font-size:11px}}
+.section-toggle{width:100%;display:flex;justify-content:space-between;align-items:center;text-align:left;border:0;background:transparent;color:#8ca6bc;padding:7px 2px;cursor:pointer;font:inherit;font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.section-toggle:hover{color:#fff}.section-toggle .arrow{font-size:15px;transition:transform .15s}.section-toggle[aria-expanded="false"] .arrow{transform:rotate(-90deg)}
+.section-content[hidden]{display:none!important}.report{overflow:auto;max-height:100%}
+@media(max-width:1050px){main{height:auto;overflow:visible}.viewer{height:calc(100vh - 62px);min-height:430px}.report{max-height:none}}
+#backToDomeFloat{position:absolute;right:16px;top:15px;z-index:12;display:none;box-shadow:0 5px 20px #0008}#backToDomeFloat.visible{display:block}.memberDrawing{background:#1a2b3b;border:1px solid #37536a;border-radius:9px;margin:9px 0;padding:10px}.memberDrawing svg{width:100%;height:auto;display:block}.memberDrawing small{color:#acc0d0}#memberDrawings{max-height:420px;overflow:auto}
+</style></head><body><button onclick="window.print()">Print / Save PDF</button><h1>Geodesic Dome — Fabrication Plan</h1><p>${val('freq')}V · dome fraction ${$('cut').selectedOptions[0].text} · diameter ${val('dia').toFixed(1)} mm (${(val('dia')/25.4).toFixed(2)} in) · ${edges.length} members · ${bins.length} usable stock pieces · ${overs.length} oversize members</p><p>Base: ${$('baseStyle').value==='straight'?'Straightened lower band ('+val('baseRise')+' mm)':'Spherical cut with level base plane'}. Cut grouping: ${$('lengthMode').value==='reduce'?'Standardized from '+originalVariantCount+' to '+groups.length+' families, max adjustment '+maxLengthAdjustment.toFixed(2)+' mm':'As-designed lengths, grouping tolerance '+val('tol')+' mm'}. Standardized member lengths alter end positions; verify connections.${invalidCorrectionCount?" WARNING: "+invalidCorrectionCount+" member(s) would extend beyond original hub centers.":""}</p><p>Stock: ${stock.toFixed(1)} mm; kerf ${kerf.toFixed(1)} mm per cut; stock-end trim ${trim.toFixed(1)} mm per side; member allowance ${allow.toFixed(1)} mm per side. Cutting placement uses first-fit decreasing, not guaranteed optimum.</p>${end}${hubReport}${$('doorEnabled').checked?`<h2>Door opening</h2><p>Clear width ${val('doorWidth').toFixed(1)} mm; height ${val('doorHeight').toFixed(1)} mm; nominal frame thickness ${val('doorThickness').toFixed(1)} mm; radial offset ${val('doorOffset').toFixed(1)} mm; tangential slide ${val('doorSlide').toFixed(1)} mm; base Z ${doorDefinition().base_z_mm.toFixed(1)} mm; azimuth ${$('doorAngle').value}°; ${doorIntersections.length} members intersect the projected opening; ${doorRemoved.length} whole members excluded from stock calculations. Frame is a visual overlay, not a solid/frame cut list. Reinforcement and panel trimming are not generated.</p>`:''}<h2>Added struts</h2><p>${supplementalLinks.length} supplemental member(s), included in stock plans, cut labels, and the polar map. A yellow/orange line on the map represents an added strut.</p><p>${supplementalLinks.map(l=>l.id+': '+l.aLabel+' → '+l.bLabel).join('; ')}</p><h2>Stock cutting bars</h2>${cuts||'<p>No pieces fit the specified stock length.</p>'}${overs.length?`<p><strong>Overlength:</strong> ${overs.map(q=>q.id+' '+q.length.toFixed(1)+' mm').join(', ')}</p>`:''}<div class="page"><h2>Polar-sector dome map (top view)</h2><p>12 azimuth sectors numbered counterclockwise, starting at +X. Radial rings are plan-distance guides, not panel seams. Color and member labels refer to cut groups. Projection overlaps may occur, particularly near the crown.</p><div>${legend}</div><svg class="map" viewBox="0 0 820 820" xmlns="http://www.w3.org/2000/svg"><circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#667"/>${ring}${radial}${lines}${planDoor}${labels}<circle cx="${cx}" cy="${cy}" r="3" fill="black"/></svg></div><div class="page"><h2>Cut-piece labels</h2><p>Lengths include member end allowances. Confirm connector clearances and physically verify dimensions before cutting.</p>${tags}</div><p>NOTE: top-down polar-sector assembly plan, not a dimensionally accurate flat development of spherical panels. 3D viewer illustrates tabs and holes schematically; solid CAD exports do not yet include the tabs. Structural design not certified.</p></body></html>`;
+}
+$('bracePick').onclick=()=>{linkPickMode=true;linkPickStart=null;$('hubView').value='dome';updateLinkControls();render()};$('braceNewStart').onclick=()=>{linkPickMode=true;linkPickStart=null;$('hubView').value='dome';updateLinkControls();render()};$('braceCancel').onclick=()=>{linkPickMode=false;linkPickStart=null;updateLinkControls();render()};$('braceAdd').onclick=()=>insertSupplementalLink($('braceA').value,$('braceB').value);
+$('reportHtml').onclick=()=>download('dome_fabrication_report.html',fabricationHtml(),'text/html');
+$('printReport').onclick=()=>{let blob=new Blob([fabricationHtml()],{type:'text/html'}),url=URL.createObjectURL(blob);let w=window.open(url,'_blank');if(!w){download('dome_fabrication_report.html',fabricationHtml(),'text/html')}else setTimeout(()=>URL.revokeObjectURL(url),30000)};
+
+['doorEnabled','doorAngle','doorTreatment'].forEach(id=>$(id).addEventListener('change',build));$('units').onchange=changeUnits;['baseStyle','lengthMode'].forEach(id=>$(id).addEventListener('change',build));for(const id of dimensionIds)$(id).addEventListener('change',()=>{syncDim(id);build()});$('fam').onchange=refreshMaterial;$('size').onchange=applySize;['freq','cut','rot','density','ends','tabSides','hubTaper','hubPlacement','hubBoolean','hubBoltRotation','hubBoltCount'].forEach(id=>$(id).addEventListener('change',()=>{toggleTabs();build()}));$('hubView').addEventListener('change',render);$('hubInspect').addEventListener('change',()=>{selectedHubId='auto';$('hubNode').value='auto';render();});$('hubNode').addEventListener('change',()=>{selectedHubId=$('hubNode').value;$('hubView').value='detail';zoom=1;render();});$('tabHubNode').addEventListener('change',()=>{selectedHubId=$('tabHubNode').value;$('hubNode').value=selectedHubId;$('hubView').value='detail';zoom=1;render();});$('tabInspect').onclick=()=>{$('hubView').value='detail';selectedHubId=$('tabHubNode').value;zoom=1;render();};$('backToDome').onclick=()=>{$('hubView').value='dome';zoom=1;render();};$('backToDomeFloat').onclick=$('backToDome').onclick;$('overlayToggle').onclick=()=>{dimensionalOverlayEnabled=!dimensionalOverlayEnabled;$('overlayToggle').textContent=dimensionalOverlayEnabled?'◉ Dimensions: On':'◎ Dimensions: Off';$('overlayToggle').setAttribute('aria-pressed',String(dimensionalOverlayEnabled));render();};
+ $('memberDoc').onclick=$('memberDocRight').onclick=()=>download('dome_member_drawings.html',memberDrawingDocument(),'text/html');$('woodTrim').onchange=build;['hubCenterOn','hubCenterHole','hubCenterDirection'].forEach(id=>$(id).addEventListener('change',render));
+['coverEnabled','coverType','coverThickness','coverWaste'].forEach(id=>$(id).addEventListener('change',build));
+for(const id of dimensionIds)setDim(id,Number($(id).value||0));setupCollapsibleSections();collapseInitialSections();setup();refreshMaterial();changeUnits();toggleTabs();syncAutomaticTabs();updateOptionVisibility();initializeLanding();
+</script></body></html>
